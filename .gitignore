@@ -2,3 +2,16 @@
 __pycache__/
 test.py
 terminology.md
+datasets/
+
+*.pyc
+
+instance/
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+dist/
+build/
+*.egg-info/
