@@ -9,12 +9,13 @@ services:
       POSTGRES_PASSWORD: password
       OCTONN_DB: octonn_db
       OCTONN_USER: octonn
+      MIGRATION_PATH: /scripts/migrate
     ports:
       - 127.0.0.1:5432:5432
     volumes:
       - octonn_data:/var/lib/postgresql/data
       - ../scripts/postgres/initdb:/docker-entrypoint-initdb.d:ro
-      - ../OctoNN/scripts/migrate:/scripts/migrate/:ro
+      - ../OctoNN/scripts/migrate:/scripts/migrate:ro
 
   adminer:
     image: adminer
