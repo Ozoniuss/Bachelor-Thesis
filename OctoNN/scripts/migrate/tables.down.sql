@@ -1,5 +1,0 @@
-DROP TABLE IF EXISTS architectures;
-DROP TABLE IF EXISTS datasets;
-DROP TABLE IF EXISTS models;
-DROP TABLE IF EXISTS trainings;
-DROP TABLE IF EXISTS deployment_models;
