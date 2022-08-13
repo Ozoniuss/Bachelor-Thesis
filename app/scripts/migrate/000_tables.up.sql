@@ -1,18 +1,9 @@
--- public models that were addedd by me
--- can train any model on any dataset by just changing the output layer. need to make a copy of the model and go train it
--- this means that we care about the model's input (and possibly preprocessing)
--- trainings are still stored, but again, can be done on any dataset
--- models can be evaluated on images on any list of images.
--- "type" simply means set of output labels
--- can make a model public?
--- feature vector or not? (just an if in the code)
-
 
 CREATE TABLE users(
     id UUID NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
-    username TEXT,
-    password TEXT,
-    email TEXT,
+    username TEXT NOT NULL,
+    password TEXT NOT NULL,
+    email TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ DEFAULT now(),
     CONSTRAINT username_unique UNIQUE (username),
@@ -48,7 +39,7 @@ CREATE TABLE models(
     uploader UUID NOT NULL,
     location TEXT, -- location on disk
     description TEXT,
-    createad_at TIMESTAMPTZ DEFAULT now(),
+    created_at TIMESTAMPTZ DEFAULT now(),
     updated_at TIMESTAMPTZ,
     -- public only means that it can be viewed by other people and copied (as well as the training list)
     public BOOLEAN,
