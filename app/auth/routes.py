@@ -1,7 +1,6 @@
-from datetime import timedelta
 from flask import Blueprint, jsonify, request
 from app.users.model import User
-from app.extensions import db, bcrypt, jwt
+from app.extensions import db, bcrypt
 from sqlalchemy.exc import (
     IntegrityError,
     MultipleResultsFound,
@@ -33,21 +32,7 @@ def register_user():
             409,
         )
 
-    access_token = create_access_token(
-        identity=user.id,
-        expires_delta=timedelta(minutes=30),
-    )
-
-    return (
-        jsonify(
-            {
-                "data": {
-                    "access_token": access_token,
-                }
-            }
-        ),
-        200,
-    )
+    return jsonify(), 200
 
 
 @bp.post("/login")
@@ -94,4 +79,15 @@ def login_user():
             404,
         )
 
-    return jsonify(), 200
+    access_token = create_access_token(identity=user.id)
+
+    return (
+        jsonify(
+            {
+                "data": {
+                    "access_token": access_token,
+                }
+            }
+        ),
+        200,
+    )
