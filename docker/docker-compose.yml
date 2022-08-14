@@ -15,7 +15,7 @@ services:
     volumes:
       - octonn_data:/var/lib/postgresql/data
       - ../scripts/postgres/initdb:/docker-entrypoint-initdb.d:ro
-      - ../OctoNN/scripts/migrate:/scripts/migrate:ro
+      - ../app/scripts/migrate:/scripts/migrate:ro
 
   adminer:
     image: adminer
