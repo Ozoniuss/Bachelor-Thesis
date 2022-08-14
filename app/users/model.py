@@ -1,8 +1,11 @@
+from http import server
 from sqlalchemy import Column
 
 from sqlalchemy.dialects.postgresql import UUID, TEXT, TIMESTAMP
 from sqlalchemy import inspect
-from app.extensions import db
+from app.extensions import db, bcrypt
+
+from sqlalchemy.schema import FetchedValue
 
 
 class User(db.Model):
@@ -10,15 +13,17 @@ class User(db.Model):
 
     __tablename__ = "users"
 
-    id = Column(UUID, primary_key=True)
+    id = Column(UUID, primary_key=True, server_default=FetchedValue())
     username = Column(TEXT, unique=True, nullable=False)
     password = Column(TEXT, nullable=False)
     email = Column(TEXT, unique=True, nullable=False)
-    created_at = Column(TIMESTAMP)
-    updated_at = Column(TIMESTAMP)
+    created_at = Column(TIMESTAMP, nullable=True)
+    updated_at = Column(TIMESTAMP, nullable=True)
     models = db.relationship("Model", backref="author", lazy=True)
 
-    def __init__(self, id, username, password, email, created_at, updated_at) -> None:
+    def __init__(
+        self, username, password, email, id=None, created_at=None, updated_at=None
+    ) -> None:
         super().__init__()
         self.id = id
         self.username = username
