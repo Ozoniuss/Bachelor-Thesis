@@ -1,3 +1,4 @@
+from weakref import ref
 from flask import Blueprint, jsonify, request
 from app.users.model import User
 from app.extensions import db, bcrypt
@@ -6,7 +7,12 @@ from sqlalchemy.exc import (
     MultipleResultsFound,
     NoResultFound,
 )
-from flask_jwt_extended import create_access_token
+from flask_jwt_extended import (
+    create_access_token,
+    create_refresh_token,
+    get_jwt_identity,
+    jwt_required,
+)
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -80,7 +86,26 @@ def login_user():
         )
 
     access_token = create_access_token(identity=user.id)
+    refresh_token = create_refresh_token(identity=user.id)
 
+    return (
+        jsonify(
+            {
+                "data": {
+                    "access_token": access_token,
+                    "refresh_token": refresh_token,
+                }
+            }
+        ),
+        200,
+    )
+
+
+@bp.post("/refresh")
+@jwt_required(refresh=True)
+def refresh():
+    identity = get_jwt_identity()
+    access_token = create_access_token(identity=identity)
     return (
         jsonify(
             {
