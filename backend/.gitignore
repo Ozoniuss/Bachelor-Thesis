@@ -2,9 +2,6 @@
 __pycache__/
 test.py
 terminology.md
-/datasets
-/models
-
 *.pyc
 
 instance/
