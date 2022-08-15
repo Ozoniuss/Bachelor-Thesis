@@ -1,9 +1,7 @@
 from flask import Blueprint, jsonify
 from .model import Model
-from app.extensions import db
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import or_
-from flask import url_for
 from .resource import from_db_entity
 
 bp = Blueprint("models", __name__, url_prefix="/models")
@@ -15,9 +13,6 @@ OCTONN_ADDRESS = "http://localhost:5000"
 @jwt_required()
 def list_models():
     current_user_id = get_jwt_identity()
-    print(current_user_id)
-    print(url_for("models.list_models"))
-
     model_data = []
 
     try:
@@ -28,7 +23,7 @@ def list_models():
             )
         ).all()
         for m in all_models:
-            model_data.append(from_db_entity(m))
+            model_data.append(from_db_entity(OCTONN_ADDRESS, m))
         return jsonify(data=model_data)
     except Exception as e:
         print(type(e))
