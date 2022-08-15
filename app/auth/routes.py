@@ -43,7 +43,6 @@ def register_user():
 
 @bp.post("/login")
 def login_user():
-    print(type(request.json))
     username = request.json.get("username")
     password = request.json.get("password")
     try:

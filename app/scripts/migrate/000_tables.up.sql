@@ -4,8 +4,8 @@ CREATE TABLE users(
     username TEXT NOT NULL,
     password TEXT NOT NULL,
     email TEXT NOT NULL,
-    created_at TIMESTAMPTZ DEFAULT now(),
-    updated_at TIMESTAMPTZ DEFAULT now(),
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ,
     CONSTRAINT username_unique UNIQUE (username),
     CONSTRAINT email_unique UNIQUE (email)
 );
@@ -37,14 +37,15 @@ CREATE TABLE models(
     id UUID NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
     uploader UUID NOT NULL,
-    location TEXT, -- location on disk
+    location TEXT, NOT NULL -- location on disk
     description TEXT,
-    created_at TIMESTAMPTZ DEFAULT now(),
+    created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
     -- public only means that it can be viewed by other people and copied (as well as the training list)
     public BOOLEAN,
     -- dataset the model was last trained on (maybe not necessary)
     last_trained_on UUID,
+    current_prediction_labels TEXT[],
     CONSTRAINT fk_author FOREIGN KEY (uploader) REFERENCES users (id),
     CONSTRAINT fk_dataset FOREIGN KEY (last_trained_on) REFERENCES datasets (id)
 );

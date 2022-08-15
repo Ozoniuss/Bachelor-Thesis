@@ -1,6 +1,13 @@
 """
 Configure Settings for application for specific environment
 """
+"""
+TODOS:
+- update response if jwt is missing
+"""
+
+
+from datetime import timedelta
 
 
 class Config:
@@ -15,12 +22,24 @@ class Config:
     # SQLALCHEMY_NATIVE_UNICODE = True
     # SQLALCHEMY_COMMIT_ON_TEARDOWN = True
 
+    SECRET_KEY = "movethistoenvvaribale"
+
     # use env
     DB_NAME = "octonn_db"
     DB_USER = "octonn"
     DB_PASS = "sdh45walth27xndsk6"
     DB_ADDRESS = "localhost"
     DB_PORT = 5432
+
+    JWT_SECRET_KEY = "ceipatrup4"
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(days=30)
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)
+    JWT_HEADER_NAME = "Authorization"
+    JWT_HEADER_TYPE = "Bearer"
+    JWT_TOKEN_LOCATION = "headers"
+
+    CACHE_TYPE = "SimpleCache"
+    CACHE_DEFAULT_TIMEOUT = 1000
     # BROKER_URL = os.getenv("BROKER_URL") or "redis://localhost:6379/0"
     # CELERY_BACKEND = (
     #     os.getenv("CELERY_BACKEND")
