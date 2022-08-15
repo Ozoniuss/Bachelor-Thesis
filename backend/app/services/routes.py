@@ -65,14 +65,9 @@ def train_model():
             seed=seed,
         )
     except TrainingParametersException as e:
+        print("coaie", e.as_dict())
         return (
-            jsonify(
-                errors=[
-                    {
-                        e.as_dict(),
-                    }
-                ]
-            ),
+            jsonify(errors=[e.as_dict()]),
             400,
         )
 
