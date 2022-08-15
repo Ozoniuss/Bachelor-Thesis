@@ -8,11 +8,12 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(Config)
 
-    from .extensions import db, bcrypt, jwt
+    from .extensions import db, bcrypt, jwt, cache
 
     db.init_app(app)
     bcrypt.init_app(app)
     jwt.init_app(app)
+    cache.init_app(app)
 
     from .users import bp as user_bp
     from .models import bp as model_bp
