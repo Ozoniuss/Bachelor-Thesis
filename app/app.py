@@ -18,9 +18,11 @@ def create_app():
     from .users import bp as user_bp
     from .models import bp as model_bp
     from .auth import bp as auth_bp
+    from .services import bp as services_bp
 
     app.register_blueprint(user_bp)
     app.register_blueprint(model_bp)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(services_bp)
 
     return app
