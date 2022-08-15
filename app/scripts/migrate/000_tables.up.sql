@@ -37,7 +37,7 @@ CREATE TABLE models(
     id UUID NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
     uploader UUID NOT NULL,
-    location TEXT, NOT NULL -- location on disk
+    location TEXT NOT NULL, -- location on disk
     description TEXT,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
