@@ -33,3 +33,7 @@ class Dataset(db.Model):
 
     def as_dict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+
+
+def get_id(d: Dataset) -> str:
+    return str(d.id)
