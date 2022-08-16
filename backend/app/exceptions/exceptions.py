@@ -14,3 +14,8 @@ class RequestException(Exception):
 class TrainingParametersException(RequestException):
     def __init__(self, details):
         super().__init__("Invalid training parameters", details)
+
+
+class PaginationParametersException(RequestException):
+    def __init__(self, details):
+        super().__init__("Invalid pagination parameters", details)
