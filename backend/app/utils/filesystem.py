@@ -3,12 +3,22 @@ import random
 import uuid
 import shutil
 import glob
+import shutil
 
-DATASETS_DIR = os.getenv("OCTONN_DATASETS_PATH")
+from .env import DATASETS_DIR, MODELS_DIR
 
 GLOBAL = "global"
 LABEL = "label"
 ERROR = "error"
+
+
+def copyModel(src, dst):
+    shutil.copy(src, dst)
+
+
+def createUserDirectory(user_id: str):
+    """Creates a directory for the new user in the models folder."""
+    os.mkdir(f"{MODELS_DIR()}{user_id}")
 
 
 def generateTrainingDataset(
@@ -34,7 +44,7 @@ def generateTrainingDataset(
     - is set to "global", it does the same as above, except that all directories
     have the number of images, equal to the label with the least number of images.
     """
-    dataset_path = os.path.join(DATASETS_DIR, dataset_name)
+    dataset_path = os.path.join(DATASETS_DIR(), dataset_name)
 
     labels = os.listdir(dataset_path)
     # generate a training folder with the name represented as a random uuid
