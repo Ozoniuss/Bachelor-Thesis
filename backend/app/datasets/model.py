@@ -11,7 +11,7 @@ class Dataset(db.Model):
     __tablename__ = "datasets"
 
     id = Column(UUID, primary_key=True, server_default=FetchedValue())
-    name = Column(TEXT, nullable=False)
+    name = Column(TEXT, unique=True, nullable=False)
     location = Column(TEXT, unique=True, nullable=False)
     description = Column(TEXT)
     labels = Column(ARRAY(TEXT), nullable=False)
@@ -37,3 +37,7 @@ class Dataset(db.Model):
 
 def get_id(d: Dataset) -> str:
     return str(d.id)
+
+
+def get_name(d: Dataset) -> str:
+    return str(d.name)
