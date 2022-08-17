@@ -31,7 +31,7 @@ class ModelMeta:
 @dataclass
 class ModelRelationships:
     uploader: Links
-    last_trained_on: Links
+    last_trained_on: Union[Links, None] = None
 
 
 @dataclass
@@ -46,7 +46,7 @@ class ModelData:
 
 def from_db_entity(url: str, entity: Model):
 
-    return ModelData(
+    data = ModelData(
         id=entity.id,
         attributes=ModelAttributes(
             name=entity.name,
@@ -59,8 +59,12 @@ def from_db_entity(url: str, entity: Model):
         meta=ModelMeta(current_prediction_labels=entity.current_prediction_labels),
         relationships=ModelRelationships(
             uploader=Links(related=url + "/users/" + str(entity.uploader)),
-            last_trained_on=Links(
-                related=url + "/datasets/" + str(entity.last_trained_on)
-            ),
         ),
     )
+
+    if entity.last_trained_on != None:
+        data.relationships.last_trained_on = Links(
+            related=url + "/datasets/" + str(entity.last_trained_on)
+        )
+
+    return data
