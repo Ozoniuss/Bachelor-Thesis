@@ -19,3 +19,8 @@ class TrainingParametersException(RequestException):
 class PaginationParametersException(RequestException):
     def __init__(self, details):
         super().__init__("Invalid pagination parameters", details)
+
+
+class PostModelBadArguments(RequestException):
+    def __init__(self, details):
+        super().__init__("Bad model arguments", details)
