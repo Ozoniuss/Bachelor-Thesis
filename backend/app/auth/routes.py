@@ -1,4 +1,3 @@
-from weakref import ref
 from flask import Blueprint, jsonify, request
 from app.users.model import User
 from app.extensions import db, bcrypt
@@ -14,6 +13,8 @@ from flask_jwt_extended import (
     jwt_required,
 )
 
+from ..utils.filesystem import createUserDirectory
+
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 
@@ -23,20 +24,24 @@ def register_user():
     password = request.json["password"]
     email = request.json["email"]
     encoded_pass = bcrypt.generate_password_hash(password).decode("utf-8")
+    print(encoded_pass)
     user = User(username=username, password=encoded_pass, email=email)
     try:
-        v = db.session.add(user)
+        db.session.add(user)
         db.session.commit()
     except IntegrityError as e:
 
         return (
             jsonify(
                 errors=[
-                    {"Detail": "Username already exists"},
+                    {"Detail": "Username or email already exists."},
                 ]
             ),
             409,
         )
+
+    # Creates a new directory for the user on the filesystem to store the models.
+    createUserDirectory(user_id=str(user.id))
 
     return jsonify(), 200
 
@@ -59,7 +64,7 @@ def login_user():
         return (
             jsonify(
                 errors=[
-                    {"Detail": "Invalid username or password"},
+                    {"Detail": "Invalid username or password."},
                 ]
             ),
             404,
