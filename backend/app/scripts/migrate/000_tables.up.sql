@@ -10,29 +10,18 @@ CREATE TABLE users(
     CONSTRAINT email_unique UNIQUE (email)
 );
 
--- it remains to be determined if this is necessary
--- somehow these need to be cleaned up
--- CREATE TABLE datatypes(
---     id UUID NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
---     outputs INT,
---     labels TEXT[]
--- );
-
--- If necessary, we can make a datatypes table to associate with each dataset
 -- The main folder will contain subfolders with the name of the classifications.
 CREATE TABLE datasets(
     id UUID NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
-    location TEXT, -- might be unnecessary
+    location TEXT,
     description TEXT,
-    labels TEXT[]
-    -- datatype UUID,
-    -- CONSTRAINT fk_datatype FOREIGN KEY (datatype) references datatypes (id)
+    labels TEXT[],
+    created_at TIMESTAMPTZ,
+    CONSTRAINT name_unique UNIQUE (name)
 );
 
 
--- See how this can be optimized in the future
--- In the UI this should also display input shape
 CREATE TABLE models(
     id UUID NOT NULL PRIMARY KEY,
     name TEXT NOT NULL,
@@ -45,7 +34,9 @@ CREATE TABLE models(
     public BOOLEAN,
     -- dataset the model was last trained on (maybe not necessary)
     last_trained_on UUID,
-    current_prediction_labels TEXT[],
+    -- models might not reference a dataset, but it's still necessary for the
+    -- user to provide labels in order to make predictions.
+    current_prediction_labels TEXT[] NOT NULL,
     CONSTRAINT fk_author FOREIGN KEY (uploader) REFERENCES users (id),
     CONSTRAINT fk_dataset FOREIGN KEY (last_trained_on) REFERENCES datasets (id)
 );
@@ -59,19 +50,8 @@ CREATE TABLE trainings(
     epochs INT,
     accuracy FLOAT[],
     loss_value FLOAT[],
-    created_at TIMESTAMPTZ DEFAULT now(),
+    created_at TIMESTAMPTZ,
     CONSTRAINT fk_model FOREIGN KEY (model) REFERENCES models (id) ON DELETE CASCADE,
     -- cannot delete datasets that were already used for training
     CONSTRAINT fk_dataset FOREIGN KEY (dataset) REFERENCES models(id)
 );
-
--- ready to deploy models
--- CREATE TABLE deployment_models(
---     id UUID NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
---     model UUID,
---     user UUID,
---     data BYTEA,
---     public bool,
---     created_at TIMESTAMPTZ DEFAULT now(),
---     CONSTRAINT fk_model FOREIGN KEY (model) REFERENCES models(id)
--- );
