@@ -4,7 +4,7 @@ from .model import Model
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import or_
 from .resource import from_db_entity
-from ..exceptions import PostModelBadArguments, NoFileInPostModelException
+from ..exceptions import PostModelBadArguments
 from app.extensions import db
 from sqlalchemy.exc import NoResultFound
 from ..utils.filesystem import copyModel
@@ -106,7 +106,7 @@ def create_model():
             return (
                 jsonify(
                     errors=[
-                        NoFileInPostModelException(
+                        PostModelBadArguments(
                             "Model file must have .h5 extension."
                         ).as_dict()
                     ]
@@ -117,9 +117,7 @@ def create_model():
         body_data = request.form.get("body")
         if body_data == None:
             return (
-                jsonify(
-                    errors=[NoFileInPostModelException("No body found.").as_dict()]
-                ),
+                jsonify(errors=[PostModelBadArguments("No body found.").as_dict()]),
                 400,
             )
 
