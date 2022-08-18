@@ -20,6 +20,7 @@ class Model(db.Model):
     public = Column(BOOLEAN)
     last_trained_on = Column(UUID, ForeignKey("datasets.id"), nullable=True)
     current_prediction_labels = Column(ARRAY(TEXT), nullable=False)
+    trainings = db.relationship("Training", backref="dataset", lazy=True)
 
     def __init__(
         self,
