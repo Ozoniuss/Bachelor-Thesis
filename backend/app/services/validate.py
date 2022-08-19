@@ -1,5 +1,8 @@
-from ..exceptions import TrainingParametersException
 from ..utils.filesystem import LABEL, GLOBAL, ERROR
+
+
+class TrainingParametersException(Exception):
+    pass
 
 
 def validate_training_parameters(
