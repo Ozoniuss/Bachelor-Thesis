@@ -1,7 +1,8 @@
 from http import HTTPStatus
 
-BAD_REQUEST = HTTPStatus.BAD_REQUEST
-NOT_FOUND = HTTPStatus.NOT_FOUND
+bad_request = HTTPStatus.BAD_REQUEST
+not_found = HTTPStatus.NOT_FOUND
+internal_server_error = HTTPStatus.INTERNAL_SERVER_ERROR
 
 
 class RequestException:
@@ -21,16 +22,25 @@ class RequestException:
 class BadRequestException(RequestException):
     def __init__(self, details):
         super().__init__(
-            title=BAD_REQUEST.phrase,
+            title=bad_request.phrase,
             details=details,
-            code=BAD_REQUEST.value,
+            code=bad_request.value,
         )
 
 
 class NotFoundException(RequestException):
     def __init__(self, details):
         super().__init__(
-            title=NOT_FOUND.phrase,
+            title=not_found.phrase,
             details=details,
-            code=NOT_FOUND.value,
+            code=not_found.value,
+        )
+
+
+class InternalServerException(RequestException):
+    def __init__(self, details):
+        super().__init__(
+            title=internal_server_error.phrase,
+            details=details,
+            code=internal_server_error.value,
         )
