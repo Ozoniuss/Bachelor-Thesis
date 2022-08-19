@@ -109,7 +109,7 @@ def create_model():
         new_model = Model(
             id=rand_uuid,
             name=model.name,
-            belongs_to=model.belongs_to,
+            belongs_to=current_user_id,
             location=new_location,
             description=model.description,
             created_at=model.created_at,
