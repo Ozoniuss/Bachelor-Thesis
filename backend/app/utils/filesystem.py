@@ -12,6 +12,10 @@ LABEL = "label"
 ERROR = "error"
 
 
+class FileSystemException(Exception):
+    pass
+
+
 def copyModel(src, dst):
     shutil.copy(src, dst)
 
@@ -43,12 +47,15 @@ def generateTrainingDataset(
     the training for a label, if the label has less images than the sample size
     - is set to "global", it does the same as above, except that all directories
     have the number of images, equal to the label with the least number of images.
+
+    Returns the training path and an output dictionary containing the number of
+    images from each category used in training.
     """
     dataset_path = os.path.join(DATASETS_DIR(), dataset_name)
 
     labels = os.listdir(dataset_path)
     # generate a training folder with the name represented as a random uuid
-    training_folder = uuid.uuid4().hex
+    training_folder = str(uuid.uuid4())
     training_path = os.path.join(dataset_path, training_folder)
     os.mkdir(training_path)
 
@@ -70,13 +77,15 @@ def generateTrainingDataset(
             out[label] = sample_size
 
         # There are not enough images
-        except ValueError as v:
+        except ValueError:
             if not_enough_samples == ERROR:
-                raise ValueError(v)
+                shutil.rmtree(training_path)
+                raise FileSystemException(f"Not enough samples for label {label}.")
             elif not_enough_samples == LABEL:
                 for img in glob.glob(f"{dataset_path}/{label}/*"):
                     shutil.copy(img, images_path)
                     out[label] += 1
+            # TODO: global
 
     return (training_path, out)
 
