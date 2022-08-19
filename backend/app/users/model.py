@@ -1,9 +1,8 @@
-from http import server
 from sqlalchemy import Column
 
 from sqlalchemy.dialects.postgresql import UUID, TEXT, TIMESTAMP
 from sqlalchemy import inspect
-from app.extensions import db, bcrypt
+from app.extensions import db
 
 from sqlalchemy.schema import FetchedValue
 
