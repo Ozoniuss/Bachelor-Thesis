@@ -53,3 +53,7 @@ class Model(db.Model):
 
     def as_dict(self):
         return as_dict(self)
+
+
+def get_id(m: Model) -> str:
+    return str(m.id)

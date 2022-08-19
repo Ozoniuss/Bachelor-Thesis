@@ -7,10 +7,13 @@ from app.extensions import db
 from sqlalchemy.exc import NoResultFound
 from ..utils.filesystem import copyModel
 from ..utils.env import MODELS_DIR
+from ..utils.sqlalchemy import List
 import json
 import uuid
 from .exceptions import PostModelBadArguments
+from ..public.api import PaginationParams, get_pagination_links
 from ..public.api.exception import BadRequestException, NotFoundException
+from .model import get_id
 
 bp = Blueprint("models", __name__, url_prefix="/models")
 
@@ -22,20 +25,47 @@ OCTONN_ADDRESS = "http://localhost:5000"
 @jwt_required()
 def list_models():
     current_user_id = get_jwt_identity()
-    model_data = []
+    args = request.args
+    req_pag = PaginationParams(
+        after=args.get("after", default="", type=str),
+        before=args.get("before", default="", type=str),
+        limit=args.get("limit", default=0, type=int),
+    )
+    order = args.get("order", default="asc", type=str)
+    api_path = OCTONN_ADDRESS + "/models/"
 
-    try:
-        all_models = Model.query.filter(
-            or_(
-                Model.public == True,
-                Model.belongs_to == current_user_id,
-            )
-        ).all()
-        for m in all_models:
-            model_data.append(from_db_entity(OCTONN_ADDRESS, m))
-        return jsonify(data=model_data)
-    except Exception as e:
-        return jsonify(errors=[{"Detail": str(e)}])
+    result = []
+
+    col = Model.id
+    query = Model.query.filter(
+        or_(
+            Model.public == True,
+            Model.belongs_to == current_user_id,
+        )
+    )
+
+    all_models, prev, next = List(
+        query=query,
+        limit=req_pag.limit,
+        cursorColumn=col,
+        retrieveCursor=get_id,
+        before=req_pag.before,
+        after=req_pag.after,
+        order=order,
+    )
+
+    for m in all_models:
+        result.append(from_db_entity(OCTONN_ADDRESS, m))
+
+    return jsonify(
+        data=result,
+        links=get_pagination_links(
+            api_path=api_path,
+            req_pagination_params=req_pag,
+            next=next,
+            prev=prev,
+        ),
+    )
 
 
 @bp.patch("/")
