@@ -15,8 +15,6 @@ from sqlalchemy.exc import NoResultFound
 import uuid
 import random
 
-from ..extensions import sock
-
 bp = Blueprint("services", __name__, url_prefix="/services/<model_id>")
 
 
