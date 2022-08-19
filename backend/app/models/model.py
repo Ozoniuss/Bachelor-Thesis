@@ -3,6 +3,7 @@ from sqlalchemy.dialects.postgresql import UUID, TEXT, TIMESTAMP, BOOLEAN, ARRAY
 from sqlalchemy import inspect
 from sqlalchemy.schema import FetchedValue
 from app.extensions import db
+from ..utils.sqlalchemy import as_dict
 
 
 class Model(db.Model):
@@ -12,7 +13,7 @@ class Model(db.Model):
 
     id = Column(UUID, primary_key=True, server_default=FetchedValue())
     name = Column(TEXT, nullable=False)
-    uploader = Column(UUID, ForeignKey("users.id"))
+    belongs_to = Column(UUID, ForeignKey("users.id"))
     location = Column(TEXT, nullable=False)
     description = Column(TEXT)
     created_at = Column(TIMESTAMP, nullable=True)
@@ -20,12 +21,12 @@ class Model(db.Model):
     public = Column(BOOLEAN)
     last_trained_on = Column(UUID, ForeignKey("datasets.id"), nullable=True)
     current_prediction_labels = Column(ARRAY(TEXT), nullable=False)
-    trainings = db.relationship("Training", backref="dataset", lazy=True)
+    trainings = db.relationship("Training", backref="training_model", lazy=True)
 
     def __init__(
         self,
         name,
-        uploader,
+        belongs_to,
         location,
         description,
         public,
@@ -38,7 +39,7 @@ class Model(db.Model):
         super().__init__()
         self.id = id
         self.name = name
-        self.uploader = uploader
+        self.belongs_to = belongs_to
         self.location = location
         self.description = description
         self.last_trained_on = last_trained_on
@@ -51,4 +52,4 @@ class Model(db.Model):
         return f"<Model {self.name}>"
 
     def as_dict(self):
-        return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+        return as_dict(self)

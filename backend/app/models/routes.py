@@ -1,18 +1,19 @@
-from tkinter.messagebox import NO
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, abort
 from .model import Model
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import or_
 from .resource import from_db_entity
-from ..exceptions import PostModelBadArguments
 from app.extensions import db
 from sqlalchemy.exc import NoResultFound
 from ..utils.filesystem import copyModel
 from ..utils.env import MODELS_DIR
 import json
 import uuid
+from .exceptions import PostModelBadArguments
+from ..public.api.exception import BadRequestException, NotFoundException
 
 bp = Blueprint("models", __name__, url_prefix="/models")
+
 
 OCTONN_ADDRESS = "http://localhost:5000"
 
@@ -27,7 +28,7 @@ def list_models():
         all_models = Model.query.filter(
             or_(
                 Model.public == True,
-                Model.uploader == current_user_id,
+                Model.belongs_to == current_user_id,
             )
         ).all()
         for m in all_models:
@@ -60,21 +61,16 @@ def create_model():
     try:
         validate_model_data(from_file, from_copy)
     except PostModelBadArguments as e:
-        return jsonify(errors=[e.as_dict()])
+        err = BadRequestException(str(e))
+        return jsonify(errors=[err.as_dict()]), err.code
 
     if from_copy != None:
         model: Model
         try:
             model = db.session.query(Model).filter_by(id=from_copy).one()
         except NoResultFound:
-            return (
-                jsonify(
-                    errors=[
-                        {"Detail": f"Model with copy id {from_copy} does not exist."},
-                    ]
-                ),
-                404,
-            )
+            err = NotFoundException(f"Model {from_copy} not found.")
+            return jsonify(errors=[err.as_dict()]), err.code
 
         rand_uuid = str(uuid.uuid4())
         # The location where this model will get copied.
@@ -83,12 +79,12 @@ def create_model():
         new_model = Model(
             id=rand_uuid,
             name=model.name,
-            uploader=model.uploader,
+            belongs_to=model.belongs_to,
             location=new_location,
             description=model.description,
             created_at=model.created_at,
             updated_at=model.updated_at,
-            public=False,  # model is originally private when copying
+            public=False,  # model is private when creating
             current_prediction_labels=model.current_prediction_labels,
         )
 
@@ -103,16 +99,7 @@ def create_model():
     elif from_file != None:
 
         if not allowed_file(from_file.filename):
-            return (
-                jsonify(
-                    errors=[
-                        PostModelBadArguments(
-                            "Model file must have .h5 extension."
-                        ).as_dict()
-                    ]
-                ),
-                400,
-            )
+            abort(400, description="sdaads")
 
         body_data = request.form.get("body")
         if body_data == None:
@@ -134,7 +121,7 @@ def create_model():
         new_model = Model(
             id=rand_uuid,
             name=name,
-            uploader=current_user_id,
+            belongs_to=current_user_id,
             location=location,
             description=description,
             public=public,

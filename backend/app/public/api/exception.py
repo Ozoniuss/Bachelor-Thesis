@@ -1,6 +1,7 @@
 from http import HTTPStatus
 
 BAD_REQUEST = HTTPStatus.BAD_REQUEST
+NOT_FOUND = HTTPStatus.NOT_FOUND
 
 
 class RequestException:
@@ -23,4 +24,13 @@ class BadRequestException(RequestException):
             title=BAD_REQUEST.phrase,
             details=details,
             code=BAD_REQUEST.value,
+        )
+
+
+class NotFoundException(RequestException):
+    def __init__(self, details):
+        super().__init__(
+            title=NOT_FOUND.phrase,
+            details=details,
+            code=NOT_FOUND.value,
         )

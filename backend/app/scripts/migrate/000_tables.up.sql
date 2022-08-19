@@ -23,9 +23,9 @@ CREATE TABLE datasets(
 
 
 CREATE TABLE models(
-    id UUID NOT NULL PRIMARY KEY,
+    id UUID NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
-    uploader UUID NOT NULL,
+    belongs_to UUID NOT NULL,
     location TEXT NOT NULL, -- location on disk
     description TEXT,
     created_at TIMESTAMPTZ,
@@ -37,19 +37,20 @@ CREATE TABLE models(
     -- models might not reference a dataset, but it's still necessary for the
     -- user to provide labels in order to make predictions.
     current_prediction_labels TEXT[] NOT NULL,
-    CONSTRAINT fk_author FOREIGN KEY (uploader) REFERENCES users (id),
+    CONSTRAINT fk_author FOREIGN KEY (belongs_to) REFERENCES users (id),
     CONSTRAINT fk_dataset FOREIGN KEY (last_trained_on) REFERENCES datasets (id)
 );
 
 CREATE TABLE trainings(
     id UUID NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
-    model UUID,
-    dataset UUID,
-    compiler TEXT,
-    loss_function TEXT,
-    epochs INT,
-    accuracy FLOAT[],
-    loss_value FLOAT[],
+    model UUID NOT NULL,
+    dataset UUID NOT NULL,
+    epochs INT NOT NULL,
+    accuracy FLOAT[] NOT NULL,
+    loss FLOAT[] NOT NULL,
+    val_accuracy FLOAT[],
+    val_loss FLOAT[],
+    notes TEXT,
     created_at TIMESTAMPTZ,
     CONSTRAINT fk_model FOREIGN KEY (model) REFERENCES models (id) ON DELETE CASCADE,
     -- cannot delete datasets that were already used for training

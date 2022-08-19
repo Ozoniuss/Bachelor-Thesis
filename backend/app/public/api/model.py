@@ -5,6 +5,7 @@ Models the model resource and the api interaction.
 from dataclasses import dataclass
 from typing import Union
 import uuid
+from werkzeug.datastructures import FileStorage
 
 from .common import Links
 
@@ -25,7 +26,7 @@ class ModelMeta:
 
 @dataclass
 class ModelRelationships:
-    uploader: Links
+    belongs_to: Links
     last_trained_on: Union[Links, None] = None
 
 
