@@ -99,14 +99,15 @@ def create_model():
     elif from_file != None:
 
         if not allowed_file(from_file.filename):
-            abort(400, description="sdaads")
+            err = BadRequestException("File extension not allowed, must be .h5")
+            return jsonify(errors=[err.as_dict()]), err.code
 
         body_data = request.form.get("body")
         if body_data == None:
-            return (
-                jsonify(errors=[PostModelBadArguments("No body found.").as_dict()]),
-                400,
+            err = BadRequestException(
+                "Model details not specified, add them" + "with the body key."
             )
+            return jsonify(errors=[err.as_dict()]), err.code
 
         body = json.loads(body_data)
 
@@ -115,6 +116,8 @@ def create_model():
         public = body.get("public")
         current_prediction_labels = body.get("current_prediction_labels")
 
+        # The model identifier must be generated beforehand because a folder for
+        # it must al
         rand_uuid = str(uuid.uuid4())
         location = f"{MODELS_DIR()}{str(current_user_id)}\{str(rand_uuid)}.h5"
 
@@ -132,18 +135,7 @@ def create_model():
         db.session.commit()
 
         from_file.save(location)
-
         return jsonify(data=from_db_entity(OCTONN_ADDRESS, new_model)), 201
-
-    else:
-        return jsonify(
-            errors=[
-                {
-                    "Title": "Server validation failed",
-                    "Details": "Request parameters were not validated properly.",
-                }
-            ]
-        )
 
 
 def validate_model_data(from_file, from_copy):

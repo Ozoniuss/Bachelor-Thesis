@@ -1,0 +1,2 @@
+class PostModelBadArguments(Exception):
+    pass
