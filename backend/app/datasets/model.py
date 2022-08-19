@@ -16,7 +16,7 @@ class Dataset(db.Model):
     description = Column(TEXT)
     labels = Column(ARRAY(TEXT), nullable=False)
     created_at = Column(TIMESTAMP, nullable=True)
-    trainings = db.relationship("Training", backref="dataset", lazy=True)
+    trainings = db.relationship("Training", backref="training_dataset", lazy=True)
 
     def __init__(
         self, name, location, description, labels, id=None, created_at=None
