@@ -1,7 +1,10 @@
 from sqlalchemy import desc, Column
 from flask_sqlalchemy import BaseQuery
 
-from ...exceptions.exceptions import PaginationParametersException
+
+class PaginationParametersException(Exception):
+    pass
+
 
 """
 This functions are used for cursor pagination.
