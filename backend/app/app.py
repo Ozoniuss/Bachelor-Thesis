@@ -1,6 +1,11 @@
 from flask import Flask
 from .config import Config
-from flask_socketio import emit
+
+import redis
+
+jwt_redis_blocklist = redis.StrictRedis(
+    host="localhost", port=6379, db=0, decode_responses=True
+)
 
 # application factory function
 def create_app():
