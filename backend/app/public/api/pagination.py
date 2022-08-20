@@ -20,15 +20,24 @@ def get_pagination_links(
     req_pagination_params: PaginationParams,
     next: str,
     prev: str,
+    filters: dict = None,
 ):
     links = PaginationLinks()
     if next != "":
         links.next = pagination_link(
-            api_path, req_pagination_params.before, next, req_pagination_params.limit
+            api_path,
+            req_pagination_params.before,
+            next,
+            req_pagination_params.limit,
+            filters,
         )
     if prev != "":
         links.prev = pagination_link(
-            api_path, prev, req_pagination_params.after, req_pagination_params.limit
+            api_path,
+            prev,
+            req_pagination_params.after,
+            req_pagination_params.limit,
+            filters,
         )
     return links
 
@@ -38,6 +47,7 @@ def pagination_link(
     before: str,
     after: str,
     limit: int,
+    filters: dict = None,
 ):
     link = api_path + "?"
     if before != "":
@@ -46,5 +56,9 @@ def pagination_link(
         link += f"after={after}&"
     if limit != 0:
         link += f"limit={limit}&"
+
+    if filters != None:
+        for key, val in filters.items():
+            link += f"{key}={val}&"
 
     return link.rstrip("&")
