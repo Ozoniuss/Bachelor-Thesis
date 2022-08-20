@@ -3,6 +3,8 @@ from http import HTTPStatus
 bad_request = HTTPStatus.BAD_REQUEST
 not_found = HTTPStatus.NOT_FOUND
 internal_server_error = HTTPStatus.INTERNAL_SERVER_ERROR
+conflict = HTTPStatus.CONFLICT
+unauthorized = HTTPStatus.UNAUTHORIZED
 
 
 class RequestException:
@@ -43,4 +45,22 @@ class InternalServerException(RequestException):
             title=internal_server_error.phrase,
             details=details,
             code=internal_server_error.value,
+        )
+
+
+class ConflictException(RequestException):
+    def __init__(self, details):
+        super().__init__(
+            title=conflict.phrase,
+            details=details,
+            code=conflict.value,
+        )
+
+
+class UnauthorizedException(RequestException):
+    def __init__(self, details):
+        super().__init__(
+            title=unauthorized.phrase,
+            details=details,
+            code=unauthorized.value,
         )
