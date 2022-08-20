@@ -38,3 +38,9 @@ class ModelData:
     links: Links
     relationships: ModelRelationships
     type: str = "model"
+
+
+@dataclass
+class ModelFilters:
+    name: Union[str, None]
+    public: Union[bool, None]

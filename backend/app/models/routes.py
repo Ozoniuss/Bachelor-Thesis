@@ -11,9 +11,10 @@ from ..utils.sqlalchemy import List
 import json
 import uuid
 from .exceptions import PostModelBadArguments
-from ..public.api import PaginationParams, get_pagination_links
+from ..public.api import PaginationParams, get_pagination_links, ModelFilters
 from ..public.api.exception import BadRequestException, NotFoundException
 from .model import get_id
+
 
 bp = Blueprint("models", __name__, url_prefix="/models")
 
@@ -32,17 +33,21 @@ def list_models():
         limit=args.get("limit", default=0, type=int),
     )
     order = args.get("order", default="asc", type=str)
+    filters = ModelFilters(
+        name=args.get("name"),
+        public=args.get("public"),
+    )
     api_path = OCTONN_ADDRESS + "/models/"
 
     result = []
 
     col = Model.id
-    query = Model.query.filter(
-        or_(
-            Model.public == True,
-            Model.belongs_to == current_user_id,
-        )
-    )
+    query = Model.query.filter(Model.belongs_to == current_user_id)
+
+    if filters.public != None:
+        query = query.filter(Model.public == filters.public)
+    if filters.name != None:
+        query = query.filter(Model.name == filters.name)
 
     all_models, prev, next = List(
         query=query,
