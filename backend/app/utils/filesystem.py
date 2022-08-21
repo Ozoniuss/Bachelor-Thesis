@@ -94,7 +94,7 @@ def removeTrainingDataset(training_path: str):
     shutil.rmtree(training_path)
 
 
-def getLabelsPaginated(dataset_name: str, after: int = 0, limit: int = 0) -> list[str]:
+def getLabelsPaginated(dataset_name: str, after: int = 0, limit: int = 0):
     """
     Returns the labels from a dataset, starting from the one on position
     specified by "after". Returns at most "limit" labels, or less if there
@@ -107,10 +107,13 @@ def getLabelsPaginated(dataset_name: str, after: int = 0, limit: int = 0) -> lis
     one.
     """
     full_path = os.path.join(DATASETS_DIR(), dataset_name)
+    next = 0
+    if after + limit < len(os.listdir(full_path)):
+        next = after + limit
     if limit != 0:
-        return os.listdir(full_path)[after : after + limit]
+        return os.listdir(full_path)[after : after + limit], next
     else:
-        return os.listdir(full_path)[after:]
+        return os.listdir(full_path)[after:], 0
 
 
 def getImagesPaginated(
@@ -122,7 +125,10 @@ def getImagesPaginated(
     """
     full_path = os.path.join(DATASETS_DIR(), dataset_name, label_name)
     glob_path = full_path + "\*"
+    next = 0
+    if after + limit < len(glob.glob(glob_path)):
+        next = after + limit
     if limit != 0:
-        return glob.glob(glob_path)[after : after + limit]
+        return glob.glob(glob_path)[after : after + limit], next
     else:
-        return glob.glob(glob_path)[after:]
+        return glob.glob(glob_path)[after:], 0
