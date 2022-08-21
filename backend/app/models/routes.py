@@ -140,7 +140,12 @@ def create_model():
         try:
             model = db.session.query(Model).filter_by(id=from_copy).one()
         except NoResultFound:
-            err = NotFoundException(f"Model {from_copy} not found.")
+            err = NotFoundException(f"Model not found.")
+            return jsonify(errors=[err.as_dict()]), err.code
+
+        # Do not allow making copies of models that are private to other users.
+        if (model.belongs_to != current_user_id) and (model.public == False):
+            err = NotFoundException(f"Model not found.")
             return jsonify(errors=[err.as_dict()]), err.code
 
         rand_uuid = str(uuid.uuid4())
