@@ -15,11 +15,12 @@ from flask_jwt_extended import (
     get_jwt,
 )
 
-from ..utils.filesystem import createUserDirectory
+from ..utils.filesystem import FileSystemException, createUserDirectory
 from ..public.api.exception import (
     ConflictException,
     NotFoundException,
     UnauthorizedException,
+    InternalServerException,
 )
 
 from app import jwt_redis_blocklist
@@ -59,12 +60,18 @@ def register_user():
     try:
         db.session.add(user)
         db.session.commit()
-    except IntegrityError as e:
+    except IntegrityError:
         err = ConflictException(details="Username or email already exists.")
         return jsonify(errors=[err.as_dict()]), err.code
 
-    # Creates a new directory for the user on the filesystem to store the models.
-    createUserDirectory(user_id=str(user.id))
+    try:
+        createUserDirectory(user_id=str(user.id))
+    except FileSystemException:
+        # This error should only happen if two ids are duplicated and should
+        # not concern the user.
+        err = InternalServerException(details="An unknown error occured.")
+        db.session.rollback()
+        return jsonify(errors=[err.as_dict()]), err.code
 
     return jsonify(), 200
 
