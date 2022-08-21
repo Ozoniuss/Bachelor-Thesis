@@ -1,3 +1,4 @@
+from ast import Mod
 from flask import Blueprint, jsonify, request, abort
 from .model import Model
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -12,7 +13,11 @@ import json
 import uuid
 from .exceptions import PostModelBadArguments
 from ..public.api import PaginationParams, get_pagination_links, ModelFilters
-from ..public.api.exception import BadRequestException, NotFoundException
+from ..public.api.exception import (
+    BadRequestException,
+    NotFoundException,
+    InternalServerException,
+)
 from .model import get_id
 
 
@@ -95,6 +100,51 @@ def get_model(model_id):
     current_user = get_jwt_identity()
 
     try:
+        db.session(Model).query.filter_by(id=model_id).filter(
+            or_(Model.belongs_to == current_user, Model.public == True)
+        ).one()
+    except NoResultFound:
+        err = NotFoundException("Model not found.")
+        return jsonify(errors=[err.as_dict()]), err.code
+
+    return jsonify(data=from_db_entity(OCTONN_ADDRESS, model))
+
+
+@bp.delete("/<model_id>")
+@jwt_required()
+def delete_model(model_id):
+
+    updated_rows: int
+    current_user = get_jwt_identity()
+
+    try:
+        updated_rows = (
+            db.session()
+            .query(Model)
+            .filter(Model.id == model_id, Model.belongs_to == current_user)
+            .delete()
+        )
+        db.session.commit()
+
+    except Exception as e:
+        err = InternalServerException(str(e))
+        return jsonify(errors=[err.as_dict()]), err.code
+
+    if updated_rows == 0:
+        err = NotFoundException("Model not found.")
+        return jsonify(errors=[err.as_dict()]), err.code
+
+    return jsonify(), 200
+
+
+@bp.patch("/<model_id>")
+@jwt_required()
+def update_model(model_id):
+
+    model: Model
+    current_user = get_jwt_identity()
+
+    try:
         model = Model.query.filter_by(id=model_id).one()
     except NoResultFound:
         err = NotFoundException("Model not found.")
@@ -106,15 +156,6 @@ def get_model(model_id):
         err = NotFoundException("Model not found.")
         return jsonify(errors=[err.as_dict()]), err.code
 
-    return jsonify(data=from_db_entity(OCTONN_ADDRESS, model))
-
-
-@bp.patch("/")
-@jwt_required()
-def update_model():
-    """
-    Saves the current state of the model
-    """
     pass
 
 
