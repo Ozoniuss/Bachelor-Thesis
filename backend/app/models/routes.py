@@ -18,6 +18,7 @@ from ..public.api.exception import (
     NotFoundException,
     InternalServerException,
 )
+from ..public.api.model import ModelMutableData
 from .model import get_id
 
 
@@ -117,18 +118,13 @@ def delete_model(model_id):
     updated_rows: int
     current_user = get_jwt_identity()
 
-    try:
-        updated_rows = (
-            db.session()
-            .query(Model)
-            .filter(Model.id == model_id, Model.belongs_to == current_user)
-            .delete()
-        )
-        db.session.commit()
-
-    except Exception as e:
-        err = InternalServerException(str(e))
-        return jsonify(errors=[err.as_dict()]), err.code
+    updated_rows = (
+        db.session()
+        .query(Model)
+        .filter(Model.id == model_id, Model.belongs_to == current_user)
+        .delete()
+    )
+    db.session.commit()
 
     if updated_rows == 0:
         err = NotFoundException("Model not found.")
@@ -141,22 +137,36 @@ def delete_model(model_id):
 @jwt_required()
 def update_model(model_id):
 
-    model: Model
     current_user = get_jwt_identity()
+    model: Model
+
+    new_name = request.json.get("name")
+    new_description = request.json.get("description")
+    new_public = request.json.get("public")
 
     try:
-        model = Model.query.filter_by(id=model_id).one()
+        validate_update_params(new_name, new_description, new_public)
+    except UpdateModelBadArguments as e:
+        err = BadRequestException(details=str(e))
+        return jsonify(errors=[err.as_dict()]), err.code
+
+    try:
+        model = Model.query.filter(
+            Model.id == model_id, Model.belongs_to == current_user
+        ).one()
     except NoResultFound:
         err = NotFoundException("Model not found.")
         return jsonify(errors=[err.as_dict()]), err.code
 
-    # If the model does not belong to the user and is not public, they don't
-    # have permission to see it. The error message is for security concerns.
-    if (model.belongs_to != current_user) and (model.public == False):
-        err = NotFoundException("Model not found.")
-        return jsonify(errors=[err.as_dict()]), err.code
+    if new_name != None:
+        model.name = new_name
+    if new_description != None:
+        model.description = new_description
+    if new_public != None:
+        model.public = new_public
+    db.session.commit()
 
-    pass
+    return jsonify(data=from_db_entity(OCTONN_ADDRESS, model)), 200
 
 
 @bp.post("/")
@@ -268,3 +278,14 @@ ALLOWED_EXTENSIONS = ["h5"]
 
 def allowed_file(filename):
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+class UpdateModelBadArguments(Exception):
+    pass
+
+
+def validate_update_params(name, description, public):
+    if name == description == public == None:
+        raise UpdateModelBadArguments(
+            "At least one update parameter has to be specified."
+        )
