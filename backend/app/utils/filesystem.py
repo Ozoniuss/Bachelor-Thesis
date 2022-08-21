@@ -200,7 +200,7 @@ def remove_training_dataset(dataset_name, training_folder: str):
         )
 
     training_path = f"{dataset_path}\{training_folder}"
-    if not os.path.isdir(training_folder):
+    if not os.path.isdir(training_path):
         raise FileSystemException(
             "The provided training folder does not exist on the filesystem."
         )
