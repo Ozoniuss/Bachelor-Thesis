@@ -14,7 +14,6 @@ class Model(db.Model):
     id = Column(UUID, primary_key=True, server_default=FetchedValue())
     name = Column(TEXT, nullable=False)
     belongs_to = Column(UUID, ForeignKey("users.id"))
-    location = Column(TEXT, nullable=False)
     description = Column(TEXT)
     created_at = Column(TIMESTAMP, nullable=True)
     updated_at = Column(TIMESTAMP, nullable=True)
@@ -27,7 +26,6 @@ class Model(db.Model):
         self,
         name,
         belongs_to,
-        location,
         description,
         public,
         current_prediction_labels,
@@ -40,7 +38,6 @@ class Model(db.Model):
         self.id = id
         self.name = name
         self.belongs_to = belongs_to
-        self.location = location
         self.description = description
         self.last_trained_on = last_trained_on
         self.created_at = created_at

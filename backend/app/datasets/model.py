@@ -12,19 +12,15 @@ class Dataset(db.Model):
 
     id = Column(UUID, primary_key=True, server_default=FetchedValue())
     name = Column(TEXT, unique=True, nullable=False)
-    location = Column(TEXT, unique=True, nullable=False)
     description = Column(TEXT)
     labels = Column(ARRAY(TEXT), nullable=False)
     created_at = Column(TIMESTAMP, nullable=True)
     trainings = db.relationship("Training", backref="training_dataset", lazy=True)
 
-    def __init__(
-        self, name, location, description, labels, id=None, created_at=None
-    ) -> None:
+    def __init__(self, name, description, labels, id=None, created_at=None) -> None:
         super().__init__()
         self.id = id
         self.name = name
-        self.location = location
         self.description = description
         self.labels = labels
         self.created_at = created_at

@@ -1,9 +1,9 @@
 from flask import Blueprint, jsonify, request, session
-from .model import Dataset, get_id, get_name
+from .model import Dataset, get_id
 from flask_jwt_extended import jwt_required
 from .resource import from_db_entity
 from ..utils.sqlalchemy import List, ASC, DESC
-from ..utils.filesystem import getLabelsPaginated, getImagesPaginated
+from ..utils.filesystem import get_labels_paginated, get_images_paginated
 from ..public.api.folder_pagination import PaginationParams, get_pagination_links
 from ..public.api.exception import NotFoundException
 from sqlalchemy.exc import NoResultFound
@@ -73,7 +73,7 @@ def list_labels(dataset_id):
     )
     api_path = OCTONN_ADDRESS + f"/datasets/{dataset_id}/labels"
 
-    result, next = getLabelsPaginated(dataset.name, req_pag.after, req_pag.limit)
+    result, next = get_labels_paginated(dataset.name, req_pag.after, req_pag.limit)
     print(next)
 
     return jsonify(
@@ -103,7 +103,7 @@ def list_images(dataset_id, label_name):
     )
     api_path = OCTONN_ADDRESS + f"/datasets/{dataset_id}/labels/{label_name}/images"
 
-    result, next = getImagesPaginated(
+    result, next = get_images_paginated(
         dataset.name, label_name, req_pag.after, req_pag.limit
     )
     print(next)

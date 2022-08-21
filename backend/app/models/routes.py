@@ -1,12 +1,12 @@
 from ast import Mod
-from flask import Blueprint, jsonify, request, abort
+from flask import Blueprint, jsonify, request
 from .model import Model
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import or_
 from .resource import from_db_entity
 from app.extensions import db
 from sqlalchemy.exc import NoResultFound
-from ..utils.filesystem import copyModel
+from ..utils.filesystem import FileSystemException, copy_model, save_model_from_storage
 from ..utils.env import MODELS_DIR
 from ..utils.sqlalchemy import List
 import json
@@ -201,15 +201,9 @@ def create_model():
             err = NotFoundException(f"Model not found.")
             return jsonify(errors=[err.as_dict()]), err.code
 
-        rand_uuid = str(uuid.uuid4())
-        # The location where this model will get copied.
-        new_location = f"{MODELS_DIR()}{str(current_user_id)}\{str(rand_uuid)}.h5"
-
         new_model = Model(
-            id=rand_uuid,
             name=model.name,
             belongs_to=current_user_id,
-            location=new_location,
             description=model.description,
             created_at=model.created_at,
             updated_at=model.updated_at,
@@ -220,8 +214,17 @@ def create_model():
         db.session.add(new_model)
         db.session.commit()
 
-        # Copy the architecture to the user's home directory.
-        copyModel(model.location, new_model.location)
+        try:
+            # Copy the architecture to the user's home directory.
+            copy_model(
+                old_model_id=model.id,
+                old_user_id=model.belongs_to,
+                new_model_id=new_model.id,
+                new_user_id=new_model.belongs_to,
+            )
+        except FileSystemException as e:
+            err = InternalServerException(str(e))
+            return jsonify(errors=[err.as_dict()]), err.code
 
         return jsonify(data=from_db_entity(OCTONN_ADDRESS, new_model)), 201
 
@@ -245,16 +248,9 @@ def create_model():
         public = body.get("public")
         current_prediction_labels = body.get("current_prediction_labels")
 
-        # The model identifier must be generated beforehand because a folder for
-        # it must al
-        rand_uuid = str(uuid.uuid4())
-        location = f"{MODELS_DIR()}{str(current_user_id)}\{str(rand_uuid)}.h5"
-
         new_model = Model(
-            id=rand_uuid,
             name=name,
             belongs_to=current_user_id,
-            location=location,
             description=description,
             public=public,
             current_prediction_labels=current_prediction_labels,
@@ -263,7 +259,7 @@ def create_model():
         db.session.add(new_model)
         db.session.commit()
 
-        from_file.save(location)
+        save_model_from_storage(from_file, new_model.id, new_model.belongs_to)
         return jsonify(data=from_db_entity(OCTONN_ADDRESS, new_model)), 201
 
 

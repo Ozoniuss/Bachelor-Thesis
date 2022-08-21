@@ -14,7 +14,6 @@ CREATE TABLE users(
 CREATE TABLE datasets(
     id UUID NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
-    location TEXT,
     description TEXT,
     labels TEXT[],
     created_at TIMESTAMPTZ,
@@ -26,7 +25,6 @@ CREATE TABLE models(
     id UUID NOT NULL PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     belongs_to UUID NOT NULL,
-    location TEXT NOT NULL, -- location on disk
     description TEXT,
     created_at TIMESTAMPTZ,
     updated_at TIMESTAMPTZ,
