@@ -92,3 +92,37 @@ def generateTrainingDataset(
 
 def removeTrainingDataset(training_path: str):
     shutil.rmtree(training_path)
+
+
+def getLabelsPaginated(dataset_name: str, after: int = 0, limit: int = 0) -> list[str]:
+    """
+    Returns the labels from a dataset, starting from the one on position
+    specified by "after". Returns at most "limit" labels, or less if there
+    aren't enough labels left. Set limit to 0 to get all the labels until the
+    last one.
+
+    This function basically returns the images found in the intersection of
+    intervals [first_image, last_image] and [after, after + limit). It doesn't
+    raise any errors if the second one is not strictly included in the first
+    one.
+    """
+    full_path = os.path.join(DATASETS_DIR(), dataset_name)
+    if limit != 0:
+        return os.listdir(full_path)[after : after + limit]
+    else:
+        return os.listdir(full_path)[after:]
+
+
+def getImagesPaginated(
+    dataset_name: str, label_name: str, after: int = 0, limit: int = 0
+) -> list[str]:
+    """
+    Returns the images from a dataset with a specific label. Behaves exactly
+    like "getLabelsPaginated", see that function for documentation.
+    """
+    full_path = os.path.join(DATASETS_DIR(), dataset_name, label_name)
+    glob_path = full_path + "\*"
+    if limit != 0:
+        return glob.glob(glob_path)[after : after + limit]
+    else:
+        return glob.glob(glob_path)[after:]
