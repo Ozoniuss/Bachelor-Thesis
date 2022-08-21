@@ -5,9 +5,10 @@ import shutil
 import glob
 import shutil
 
-from app.public.api.exception import NotFoundException
+# todo: env variables
 
-from .env import DATASETS_DIR, MODELS_DIR
+MODELS_DIR = "C:\personal projects\Bachelor-Thesis\models\\"
+DATASETS_DIR = "C:\personal projects\Bachelor-Thesis\datasets\\"
 
 GLOBAL = "global"
 LABEL = "label"
@@ -19,48 +20,48 @@ class FileSystemException(Exception):
 
 
 def _get_datasets_directory():
-    return DATASETS_DIR()
+    return DATASETS_DIR
 
 
 def _get_models_directory():
-    return MODELS_DIR()
+    return MODELS_DIR
 
 
 def _get_user_path(user_id):
-    full_path = os.path.join(MODELS_DIR(), user_id)
+    full_path = os.path.join(MODELS_DIR, user_id)
     if not os.path.isdir(full_path):
         raise FileNotFoundError(f"{full_path} is not a valid user directory path.")
     return full_path
 
 
 def _must_get_user_path(user_id):
-    return os.path.join(MODELS_DIR(), user_id)
+    return os.path.join(MODELS_DIR, user_id)
 
 
 def _get_model_path(model_id, user_id):
-    full_path = f"{os.path.join(MODELS_DIR(), user_id, model_id)}.h5"
+    full_path = f"{os.path.join(MODELS_DIR, user_id, model_id)}.h5"
     if not os.path.isfile(full_path):
         raise FileNotFoundError(f"{full_path} is not a valid model file path.")
     return full_path
 
 
 def _must_get_model_path(model_id, user_id):
-    return f"{os.path.join(MODELS_DIR(), user_id, model_id)}.h5"
+    return f"{os.path.join(MODELS_DIR, user_id, model_id)}.h5"
 
 
 def _get_dataset_path(dataset_name):
-    full_path = os.path.join(DATASETS_DIR(), dataset_name)
+    full_path = os.path.join(DATASETS_DIR, dataset_name)
     if not os.path.isdir(full_path):
         raise FileNotFoundError(f"{full_path} is not a valid dataset directory path.")
     return full_path
 
 
 def _must_get_dataset_path(dataset_name):
-    return os.path.join(DATASETS_DIR(), dataset_name)
+    return os.path.join(DATASETS_DIR, dataset_name)
 
 
 def _get_dataset_label_path(dataset_name, label_name):
-    full_path = os.path.join(DATASETS_DIR(), dataset_name, label_name)
+    full_path = os.path.join(DATASETS_DIR, dataset_name, label_name)
     if not os.path.isdir(full_path):
         raise FileNotFoundError(
             f"{full_path} is not a valid label directory path in dataset {dataset_name}."
@@ -69,12 +70,12 @@ def _get_dataset_label_path(dataset_name, label_name):
 
 
 def _must_get_dataset_label_path(dataset_name, label_name):
-    return os.path.join(DATASETS_DIR(), dataset_name, label_name)
+    return os.path.join(DATASETS_DIR, dataset_name, label_name)
 
 
 def _get_dataset_image_path(dataset_name, label_name, image_file):
     """image_file must be specified with extension"""
-    full_path = os.path.join(DATASETS_DIR(), dataset_name, label_name, image_file)
+    full_path = os.path.join(DATASETS_DIR, dataset_name, label_name, image_file)
     if not os.path.isfile(full_path):
         raise FileNotFoundError(
             f"{full_path} is not a valid image file path in dataset {dataset_name}."
@@ -83,7 +84,7 @@ def _get_dataset_image_path(dataset_name, label_name, image_file):
 
 
 def _must_get_dataset_image_path(dataset_name, label_name, image_file):
-    return os.path.join(DATASETS_DIR(), dataset_name, label_name, image_file)
+    return os.path.join(DATASETS_DIR, dataset_name, label_name, image_file)
 
 
 def copy_model(old_model_id, old_user_id, new_model_id, new_user_id):
