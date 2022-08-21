@@ -1,5 +1,4 @@
 from datetime import timedelta
-from this import d
 from flask import Blueprint, jsonify, request
 from app.users.model import User
 from app.extensions import db, bcrypt, jwt
