@@ -17,11 +17,20 @@ services:
       - ../scripts/postgres/initdb:/docker-entrypoint-initdb.d:ro
       - ../app/scripts/migrate:/scripts/migrate:ro
 
+  redis:
+    image: redis:7.0.4-bullseye
+    container_name: octonn-redis
+    ports:
+      - "6379:6379"
+
   adminer:
     image: adminer
     restart: always
     ports:
       - 8080:8080
+    volumes:
+      - redis_data:/data
 
 volumes:
   octonn_data:
+  redis_data:
