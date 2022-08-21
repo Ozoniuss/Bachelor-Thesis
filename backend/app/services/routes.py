@@ -1,7 +1,7 @@
+from json import JSONDecodeError
 from urllib import request
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
-from .validate import validate_training_parameters, TrainingParametersException
 from ..models.model import Model
 from ..datasets.model import Dataset
 from .perform_training import TrainingException, perform_training
@@ -10,44 +10,111 @@ from ..public.api.exception import (
     NotFoundException,
     InternalServerException,
 )
-from app.extensions import db
+from app.extensions import db, socketio
 from sqlalchemy.exc import NoResultFound
 import uuid
 import random
 
+from .parameters import (
+    DEFAULT_BATCH_SIZE,
+    DEFAULT_EPOCHS,
+    DEFAULT_LEARNING_RATE,
+    DEFAULT_ON_NOT_ENOUGH_SAMPLES,
+    DEFAULT_SEED,
+    DEFAULT_TRAIN_ALL_NETWORK,
+    DEFAULT_VALIDATION_SPLIT,
+    SEED,
+    BATCH_SIZE,
+    EPOCHS,
+    LEARNING_RATE,
+    ON_NOT_ENOUGH_SAMPLES,
+    TRAIN_ALL_NETWORK,
+    VALIDATION_SPLIT,
+    SAMPLE_SIZE,
+    DEFAULT_SAMPLE_SIZE,
+    TrainingParametersException,
+    validate_training_parameters,
+)
+
 bp = Blueprint("services", __name__, url_prefix="/services/<model_id>")
+
+
+@bp.get("/training_params_validation")
+@jwt_required()
+def validate_params(model_id):
+    """
+    This function validates the training parameters specified by the user for
+    training
+    """
+    args = request.args
+    dataset_id = args.get("dataset_id", default=str(uuid.UUID(int=0)), type=str)
+
+    epochs = args.get(EPOCHS, default=DEFAULT_EPOCHS, type=int)
+    batch_size = args.get(BATCH_SIZE, default=DEFAULT_BATCH_SIZE, type=int)
+    learning_rate = args.get(LEARNING_RATE, default=DEFAULT_LEARNING_RATE, type=float)
+    sample_size = args.get(SAMPLE_SIZE, default=DEFAULT_SAMPLE_SIZE, type=int)
+    on_not_enough_samples = args.get(
+        ON_NOT_ENOUGH_SAMPLES, default=DEFAULT_ON_NOT_ENOUGH_SAMPLES, type=str
+    )
+    validation_split = args.get(
+        VALIDATION_SPLIT, default=DEFAULT_VALIDATION_SPLIT, type=float
+    )
+    seed = args.get(SEED, default=DEFAULT_SEED, type=int)
+    train_all_network = args.get(
+        TRAIN_ALL_NETWORK, default=DEFAULT_TRAIN_ALL_NETWORK, type=bool
+    )
+
+    try:
+        validate_training_parameters(
+            epochs=epochs,
+            batch_size=batch_size,
+            learning_rate=learning_rate,
+            on_not_enough_samples=on_not_enough_samples,
+            validation_split=validation_split,
+            seed=seed,
+        )
+    except TrainingParametersException as e:
+        err = BadRequestException(str(e))
+        return (jsonify(errors=[err.as_dict()]), err.code)
+
+    try:
+        model = db.session.query(Model).filter_by(id=model_id).one()
+    except NoResultFound:
+        err = NotFoundException(f"Model {model_id} not found.")
+        return jsonify(errors=[err.as_dict()]), err.code
+
+    try:
+        dataset = (db.session.query(Dataset).filter_by(id=dataset_id)).one()
+    except NoResultFound:
+        err = NotFoundException(f"Model {dataset_id} not found.")
+        return jsonify(errors=[err.as_dict()]), err.code
+
+    # The json returned here represents what should get passed to the server
+    # through the "train" event via websockets, once the connection has been
+    # established.
+    return (
+        jsonify(
+            data={
+                "model_id": model.id,
+                "dataset_name": dataset.name,
+                "model_labels": model.current_prediction_labels,
+                "dataset_labels": dataset.labels,
+                EPOCHS: epochs,
+                BATCH_SIZE: batch_size,
+                LEARNING_RATE: learning_rate,
+                SAMPLE_SIZE: sample_size,
+                ON_NOT_ENOUGH_SAMPLES: on_not_enough_samples,
+                VALIDATION_SPLIT: validation_split,
+                SEED: seed,
+            }
+        ),
+        200,
+    )
 
 
 @bp.get("/training")
 @jwt_required()
 def train_model(model_id):
-    """
-    This function trains a model on a specific dataset. The following are
-    possible:
-    - The model's current labels are the same as the dataset's labels. In this
-    case, the output layer will stay the same and normal training shall be
-    performed.
-    - The model's current labels are different from the dataset's labels. This
-    obviously includes not having the same number of neurons as the dataset's
-    number of categories. In this case, the model will be loaded and the output
-    layer will be removed and replaced by a new Dense (possibly customizable in
-    the future) output layer with the required number of neurons. The new model
-    shall be compiled and trained on the new dataset with the provided training
-    configurations
-    - It is possible to configure the following:
-    - - epochs: limited to 30
-    - - learning rate: between 0.1 and 0.0001 (adam compiler used)
-    - - batch size: between 5 and 100
-    - - on_not_enough_samples: see generateTrainingDataset definition
-    - - validation_split: between 0 and 0.5. If set to 0 or not provided, there
-    will be no validation dataset.
-    - - seed: seed for shuffling the data. If not provided, it is generated
-    automatically.
-
-    It is desired that this becomes more configurable in the future. It should
-    be at least possible to customize the loss function, the output layer type
-    and the activation function of the output layer.
-    """
 
     args = request.args
     dataset_id = args.get("dataset_id", default=str(uuid.UUID(int=0)), type=str)
@@ -119,3 +186,11 @@ def train_model(model_id):
 @jwt_required()
 def make_prediction(model_id):
     pass
+
+
+# @sock.route("/echo")
+# def echo(ws):
+#     print("jaa")
+#     while True:
+#         data = ws.receive()
+#         ws.send(data)
