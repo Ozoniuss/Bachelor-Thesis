@@ -101,9 +101,11 @@ def get_model(model_id):
     current_user = get_jwt_identity()
 
     try:
-        db.session(Model).query.filter_by(id=model_id).filter(
-            or_(Model.belongs_to == current_user, Model.public == True)
-        ).one()
+        model = (
+            Model.query.filter_by(id=model_id)
+            .filter(or_(Model.belongs_to == current_user, Model.public == True))
+            .one()
+        )
     except NoResultFound:
         err = NotFoundException("Model not found.")
         return jsonify(errors=[err.as_dict()]), err.code
