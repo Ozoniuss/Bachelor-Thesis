@@ -25,6 +25,13 @@ OCTONN_ADDRESS = "http://localhost:5000"
 @bp.get("/")
 @jwt_required()
 def list_models():
+    """
+    Lists all models that the user has permission to see.
+
+    If public is true, it lists all public models. If set to false, it lists
+    all the private models of the user. If unset, it returns both public models
+    and the user's private models.
+    """
     current_user_id = get_jwt_identity()
     args = request.args
     req_pag = PaginationParams(
@@ -42,12 +49,19 @@ def list_models():
     result = []
 
     col = Model.id
-    query = Model.query.filter(Model.belongs_to == current_user_id)
+    query = Model.query
 
     if filters.public != None:
         query = query.filter(Model.public == filters.public)
     if filters.name != None:
         query = query.filter(Model.name == filters.name)
+
+    # If there are no public filters, retrieve all the models that are either
+    # the user's private models or public.
+    if filters.public == None:
+        query = query.filter(
+            or_(Model.belongs_to == current_user_id, Model.public == True)
+        )
 
     all_models, prev, next = List(
         query=query,
@@ -71,6 +85,28 @@ def list_models():
             prev=prev,
         ),
     )
+
+
+@bp.get("/<model_id>")
+@jwt_required()
+def get_model(model_id):
+
+    model: Model
+    current_user = get_jwt_identity()
+
+    try:
+        model = Model.query.filter_by(id=model_id).one()
+    except NoResultFound:
+        err = NotFoundException("Model not found.")
+        return jsonify(errors=[err.as_dict()]), err.code
+
+    # If the model does not belong to the user and is not public, they don't
+    # have permission to see it. The error message is for security concerns.
+    if (model.belongs_to != current_user) and (model.public == False):
+        err = NotFoundException("Model not found.")
+        return jsonify(errors=[err.as_dict()]), err.code
+
+    return jsonify(data=from_db_entity(OCTONN_ADDRESS, model))
 
 
 @bp.patch("/")
