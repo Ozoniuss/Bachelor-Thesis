@@ -3,6 +3,7 @@ import random
 import uuid
 import shutil
 import glob
+from werkzeug.datastructures import FileStorage
 
 # todo: env variables
 MODELS_DIR = "C:\personal projects\Bachelor-Thesis\models\\"
@@ -109,6 +110,18 @@ def copy_model(old_model_id, old_user_id, new_model_id, new_user_id):
     shutil.copy(old_path, new_path)
 
 
+def save_model_from_storage(fs: FileStorage, model_id: str, user_id: str):
+    full_path = _must_get_model_path(model_id, user_id)
+    if os.path.isfile(full_path):
+        raise FileSystemException(
+            "Cannot save model from file storage to new location because a file already exists there."
+        )
+    try:
+        fs.save(full_path)
+    except Exception:
+        raise FileSystemException("Could not save model from file storage.")
+
+
 def create_user_directory(user_id: str):
     """Creates a directory for the new user in the models folder."""
     full_path = _must_get_user_path(user_id)
@@ -171,7 +184,7 @@ def generate_training_dataset(
 
         try:
             for img in random.sample(
-                glob.glob(f"{dataset_path}/{label}/*"), sample_size
+                glob.glob(os.path.join(dataset_path, label, "*")), sample_size
             ):
                 shutil.copy(img, images_path)
 
@@ -183,7 +196,7 @@ def generate_training_dataset(
                 shutil.rmtree(training_path)
                 raise FileSystemException(f"Not enough samples for label {label}.")
             elif not_enough_samples == LABEL:
-                for img in glob.glob(f"{dataset_path}/{label}/*"):
+                for img in glob.glob(os.path.join(dataset_path, label, "*")):
                     shutil.copy(img, images_path)
                     out[label] += 1
             # TODO: global
@@ -199,7 +212,7 @@ def remove_training_dataset(dataset_name, training_folder: str):
             f"Dataset {dataset_name} does not exist on the file system."
         )
 
-    training_path = f"{dataset_path}\{training_folder}"
+    training_path = os.path.join(dataset_path, training_folder)
     if not os.path.isdir(training_path):
         raise FileSystemException(
             "The provided training folder does not exist on the filesystem."
@@ -248,7 +261,7 @@ def get_images_paginated(
         raise FileSystemException(
             f"Could not find label {label_name} of dataset {dataset_name} on the file system."
         )
-    glob_path = full_path + "\*"
+    glob_path = os.path.join(full_path, "*")
     next = 0
     if after + limit < len(glob.glob(glob_path)):
         next = after + limit
