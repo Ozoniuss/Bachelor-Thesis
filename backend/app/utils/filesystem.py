@@ -72,7 +72,7 @@ def _must_get_dataset_label_path(dataset_name, label_name):
 
 
 def _get_dataset_image_path(dataset_name, label_name, image_file):
-    """image_file must be specified with extension"""
+    """The image file must be specified with extension."""
     full_path = os.path.join(DATASETS_DIR, dataset_name, label_name, image_file)
     if not os.path.isfile(full_path):
         raise FileNotFoundError(
@@ -87,7 +87,7 @@ def _must_get_dataset_image_path(dataset_name, label_name, image_file):
 
 def copy_model(old_model_id, old_user_id, new_model_id, new_user_id):
     """
-    copy_model throws an error if there already exists a file with the new
+    Throws an error if there already exists a file with the new
     model's identifier in the new user's directory.
     """
     try:
@@ -133,7 +133,7 @@ def generate_training_dataset(
     containing subdirectories for each label, and each subdirectory will contain
     "sample_size" number of images.
 
-    Min sample size is a parameter defined in the following way:
+    Not enough samples is a parameter defined in the following way:
     - if set to "error", it throws an error if there is a label which doesn't
     have enough images to generate the sample
     - if set to "local", it uses all of the images in the directory to generate
