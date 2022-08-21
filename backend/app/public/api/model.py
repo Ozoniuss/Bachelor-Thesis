@@ -44,3 +44,10 @@ class ModelData:
 class ModelFilters:
     name: Union[str, None]
     public: Union[bool, None]
+
+
+@dataclass
+class ModelMutableData:
+    name: Union[str, None]
+    description: Union[str, None]
+    public: Union[bool, None]
