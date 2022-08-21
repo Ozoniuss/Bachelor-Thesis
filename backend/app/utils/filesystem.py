@@ -3,10 +3,8 @@ import random
 import uuid
 import shutil
 import glob
-import shutil
 
 # todo: env variables
-
 MODELS_DIR = "C:\personal projects\Bachelor-Thesis\models\\"
 DATASETS_DIR = "C:\personal projects\Bachelor-Thesis\datasets\\"
 
