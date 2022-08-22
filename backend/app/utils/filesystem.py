@@ -4,10 +4,14 @@ import uuid
 import shutil
 import glob
 from werkzeug.datastructures import FileStorage
+from keras.models import load_model as keras_load_model
+from keras import Sequential
 
 # todo: env variables
 MODELS_DIR = "C:\personal projects\Bachelor-Thesis\models\\"
 DATASETS_DIR = "C:\personal projects\Bachelor-Thesis\datasets\\"
+TRAINING_DIR = "C:\personal projects\Bachelor-Thesis\\training\\"
+TESTING_DIR = "C:\personal projects\Bachelor-Thesis\\test\\"
 
 GLOBAL = "global"
 LABEL = "label"
@@ -57,6 +61,28 @@ def _get_dataset_path(dataset_name):
 
 def _must_get_dataset_path(dataset_name):
     return os.path.join(DATASETS_DIR, dataset_name)
+
+
+def _get_training_path(training_folder):
+    full_path = os.path.join(TRAINING_DIR, training_folder)
+    if not os.path.isdir(full_path):
+        raise FileNotFoundError(f"{full_path} is not a valid training directory path.")
+    return full_path
+
+
+def _must_get_testing_path(testing_folder):
+    return os.path.join(TESTING_DIR, testing_folder)
+
+
+def _get_testing_path(testing_folder):
+    full_path = os.path.join(TESTING_DIR, testing_folder)
+    if not os.path.isdir(full_path):
+        raise FileNotFoundError(f"{full_path} is not a valid testing directory path.")
+    return full_path
+
+
+def _must_get_training_path(training_folder):
+    return os.path.join(TRAINING_DIR, training_folder)
 
 
 def _get_dataset_label_path(dataset_name, label_name):
@@ -122,6 +148,23 @@ def save_model_from_storage(fs: FileStorage, model_id: str, user_id: str):
         raise FileSystemException("Could not save model from file storage.")
 
 
+def save_images_from_storage(images: list[FileStorage], test_folder: str):
+    full_path = _must_get_testing_path(test_folder)
+    try:
+        os.mkdir(full_path)
+    except FileExistsError:
+        raise FileSystemException(
+            "Cannot save files from file storage to testing location because a"
+            + "test dataset already exists there."
+        )
+    for img in images:
+        try:
+            img.save(os.path.join(full_path, img.filename))
+        except Exception as e:
+            print(e)
+            raise FileSystemException("Could not save files from file storage.")
+
+
 def create_user_directory(user_id: str):
     """Creates a directory for the new user in the models folder."""
     full_path = _must_get_user_path(user_id)
@@ -138,7 +181,7 @@ def generate_training_dataset(
 ):
     """
     Generates a training dataset for a specified dataset with a specified sample
-    size for each category.
+    size for each category, on the filesystem.
 
     Each dataset is inside a directory labeled with the dataset's name, and the
     images for each label are inside a subdirectory with the label's name. This
@@ -168,10 +211,16 @@ def generate_training_dataset(
 
     # generate a training folder with the name represented as a random uuid
     training_folder = str(uuid.uuid4())
-    training_path = os.path.join(dataset_path, training_folder)
+    training_path = _must_get_training_path(training_folder)
 
     # Change of collision about 1 in 10e18, it is safe to assume this folder does not exist.
-    os.mkdir(training_path)
+    try:
+        os.mkdir(training_path)
+    except FileExistsError:
+        # easter egg :)
+        raise FileSystemException(
+            "There already exists a training taking place in this folder."
+        )
 
     out = {}
 
@@ -204,21 +253,26 @@ def generate_training_dataset(
     return (training_folder, out)
 
 
-def remove_training_dataset(dataset_name, training_folder: str):
+def remove_training_dataset(training_folder: str):
     try:
-        dataset_path = _get_dataset_path(dataset_name)
+        training_path = _get_training_path(training_folder)
     except FileNotFoundError:
         raise FileSystemException(
-            f"Dataset {dataset_name} does not exist on the file system."
-        )
-
-    training_path = os.path.join(dataset_path, training_folder)
-    if not os.path.isdir(training_path):
-        raise FileSystemException(
-            "The provided training folder does not exist on the filesystem."
+            f"Training folder {training_folder} does not exist on the file system."
         )
 
     shutil.rmtree(training_path)
+
+
+def remove_testing_dataset(testing_folder: str):
+    try:
+        testing_path = _get_testing_path(testing_folder)
+    except FileNotFoundError:
+        raise FileSystemException(
+            f"testing folder {testing_folder} does not exist on the file system."
+        )
+
+    shutil.rmtree(testing_path)
 
 
 def get_labels_paginated(dataset_name: str, after: int = 0, limit: int = 0):
@@ -269,3 +323,14 @@ def get_images_paginated(
         return glob.glob(glob_path)[after : after + limit], next
     else:
         return glob.glob(glob_path)[after:], 0
+
+
+def load_model(model_id, user_id) -> Sequential:
+    """
+    Loads a model from the filesystem.
+    """
+    try:
+        full_path = _get_model_path(model_id, user_id)
+        return keras_load_model(full_path)
+    except FileNotFoundError:
+        raise FileSystemException("Model is not stored on the file system.")
