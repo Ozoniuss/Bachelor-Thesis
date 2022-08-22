@@ -1,6 +1,6 @@
 from keras.layers import Rescaling
 from keras.utils import image_dataset_from_directory
-from filesystem import _get_training_path, _get_testing_path, FileSystemException
+from .filesystem import _get_training_path, _get_testing_path, FileSystemException
 
 
 def __get_full_training_path(training_folder):
@@ -106,4 +106,4 @@ def get_testing_dataset_iterators(testing_folder):
     )
     # test_normalized_ds = test_ds.map(lambda x: normalization_layer(x))
     test_normalized_ds = test_ds
-    return test_ds
+    return test_normalized_ds
