@@ -7,7 +7,7 @@ from .resource import from_db_entity
 from app.extensions import db
 from sqlalchemy.exc import NoResultFound
 from ..utils.filesystem import FileSystemException, copy_model, save_model_from_storage
-from ..utils.env import MODELS_DIR
+from ..utils.file_extensions import allowed_file, get_model_allowed_extensions
 from ..utils.sqlalchemy import List
 import json
 import uuid
@@ -20,7 +20,6 @@ from ..public.api.exception import (
 )
 from ..public.api.model import ModelMutableData
 from .model import get_id
-
 
 bp = Blueprint("models", __name__, url_prefix="/models")
 
@@ -142,12 +141,14 @@ def update_model(model_id):
     current_user = get_jwt_identity()
     model: Model
 
-    new_name = request.json.get("name")
-    new_description = request.json.get("description")
-    new_public = request.json.get("public")
+    new_data = ModelMutableData(
+        name=request.json.get("name"),
+        description=request.json("description"),
+        public=request.json("public"),
+    )
 
     try:
-        validate_update_params(new_name, new_description, new_public)
+        validate_update_params(new_data.name, new_data.description, new_data.public)
     except UpdateModelBadArguments as e:
         err = BadRequestException(details=str(e))
         return jsonify(errors=[err.as_dict()]), err.code
@@ -160,12 +161,12 @@ def update_model(model_id):
         err = NotFoundException("Model not found.")
         return jsonify(errors=[err.as_dict()]), err.code
 
-    if new_name != None:
-        model.name = new_name
-    if new_description != None:
-        model.description = new_description
-    if new_public != None:
-        model.public = new_public
+    if new_data.name != None:
+        model.name = new_data.name
+    if new_data.description != None:
+        model.description = new_data.description
+    if new_data.public != None:
+        model.public = new_data.public
     db.session.commit()
 
     return jsonify(data=from_db_entity(OCTONN_ADDRESS, model)), 200
@@ -230,7 +231,7 @@ def create_model():
 
     elif from_file != None:
 
-        if not allowed_file(from_file.filename):
+        if not allowed_file(from_file.filename, get_model_allowed_extensions()):
             err = BadRequestException("File extension not allowed, must be .h5")
             return jsonify(errors=[err.as_dict()]), err.code
 
@@ -269,13 +270,6 @@ def validate_model_data(from_file, from_copy):
 
     if from_file != None and from_copy != None:
         raise PostModelBadArguments("Cannot use both a file and a copy identifier.")
-
-
-ALLOWED_EXTENSIONS = ["h5"]
-
-
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 class UpdateModelBadArguments(Exception):
