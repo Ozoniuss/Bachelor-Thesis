@@ -14,7 +14,7 @@ from flask_jwt_extended import (
     get_jwt,
 )
 
-from ..utils.filesystem import FileSystemException, createUserDirectory
+from ..utils.filesystem import FileSystemException, create_user_directory
 from ..public.api.exception import (
     ConflictException,
     NotFoundException,
@@ -64,11 +64,13 @@ def register_user():
         return jsonify(errors=[err.as_dict()]), err.code
 
     try:
-        createUserDirectory(user_id=str(user.id))
+        create_user_directory(user_id=str(user.id))
     except FileSystemException:
         # This error should only happen if two ids are duplicated and should
         # not concern the user.
-        err = InternalServerException(details="An unknown error occured.")
+        err = InternalServerException(
+            details="An error occured when saving the user to the filesystem."
+        )
         db.session.rollback()
         return jsonify(errors=[err.as_dict()]), err.code
 
