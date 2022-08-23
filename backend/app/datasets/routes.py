@@ -4,7 +4,11 @@ from flask_jwt_extended import jwt_required
 from .resource import from_db_entity
 from ..utils.sqlalchemy import List, ASC, DESC
 from ..utils.filesystem import get_labels_paginated, get_images_paginated
-from ..public.api.folder_pagination import PaginationParams, get_pagination_links
+from ..public.api.pagination import PaginationParams, get_pagination_links
+from ..public.api.folder_pagination import (
+    PaginationParams as FolderPaginationParams,
+    get_pagination_links as get_folder_pagination_links,
+)
 from ..public.api.exception import NotFoundException
 from sqlalchemy.exc import NoResultFound
 from ..extensions import db
@@ -67,18 +71,18 @@ def list_labels(dataset_id):
         return jsonify(errors=[err.as_dict()]), err.code
 
     args = request.args
-    req_pag = PaginationParams(
+    req_pag = FolderPaginationParams(
         after=args.get("after", default=0, type=int),
         limit=args.get("limit", default=0, type=int),
     )
     api_path = OCTONN_ADDRESS + f"/datasets/{dataset_id}/labels"
 
-    result, next = get_labels_paginated(dataset.name, req_pag.after, req_pag.limit)
+    result, next = get_labels_paginated(dataset.id, req_pag.after, req_pag.limit)
     print(next)
 
     return jsonify(
         data=result,
-        links=get_pagination_links(
+        links=get_folder_pagination_links(
             api_path=api_path,
             req_pagination_params=req_pag,
             next=next,
@@ -97,20 +101,20 @@ def list_images(dataset_id, label_name):
         return jsonify(errors=[err.as_dict()]), err.code
 
     args = request.args
-    req_pag = PaginationParams(
+    req_pag = FolderPaginationParams(
         after=args.get("after", default=0, type=int),
         limit=args.get("limit", default=0, type=int),
     )
     api_path = OCTONN_ADDRESS + f"/datasets/{dataset_id}/labels/{label_name}/images"
 
     result, next = get_images_paginated(
-        dataset.name, label_name, req_pag.after, req_pag.limit
+        dataset.id, label_name, req_pag.after, req_pag.limit
     )
     print(next)
 
     return jsonify(
         data=result,
-        links=get_pagination_links(
+        links=get_folder_pagination_links(
             api_path=api_path,
             req_pagination_params=req_pag,
             next=next,
