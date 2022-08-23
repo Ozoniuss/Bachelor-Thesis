@@ -178,6 +178,7 @@ def generate_training_dataset(
     dataset_name: str,
     sample_size: int = 10,
     not_enough_samples=ERROR,
+    training_folder=None,
 ):
     """
     Generates a training dataset for a specified dataset with a specified sample
@@ -209,8 +210,12 @@ def generate_training_dataset(
 
     labels = os.listdir(dataset_path)
 
-    # generate a training folder with the name represented as a random uuid
-    training_folder = str(uuid.uuid4())
+    # Generate a training folder with the name represented as a random uuid, or
+    # with the identifier provided by the user. It is useful to provide an
+    # identifier if using web sockets because it is easier to identify the
+    # training dataset when closing the websocket connection.
+    if training_folder == None:
+        training_folder = str(uuid.uuid4())
     training_path = _must_get_training_path(training_folder)
 
     # Change of collision about 1 in 10e18, it is safe to assume this folder does not exist.
@@ -264,6 +269,12 @@ def remove_training_dataset(training_folder: str):
     shutil.rmtree(training_path)
 
 
+def must_remove_training_dataset(training_folder: str):
+    training_folder = _must_get_training_path(training_folder)
+    if os.path.isdir(training_folder):
+        shutil.rmtree(training_folder)
+
+
 def remove_testing_dataset(testing_folder: str):
     try:
         testing_path = _get_testing_path(testing_folder)
@@ -273,6 +284,12 @@ def remove_testing_dataset(testing_folder: str):
         )
 
     shutil.rmtree(testing_path)
+
+
+def must_remove_testing_dataset(testing_folder: str):
+    testing_folder = _must_get_testing_path(testing_folder)
+    if os.path.isdir(testing_folder):
+        shutil.rmtree(testing_folder)
 
 
 def get_labels_paginated(dataset_name: str, after: int = 0, limit: int = 0):
