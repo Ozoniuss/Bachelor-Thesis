@@ -57,6 +57,8 @@ def list_models():
     order = args.get("order", default="asc", type=str)
     filters = ModelFilters(
         name=args.get("name"),
+        # specifying type=bool for this makes it always true for some reason
+        # this can be None, true or false (str)
         public=args.get("public"),
     )
     api_path = OCTONN_ADDRESS + "/models/"
@@ -67,7 +69,12 @@ def list_models():
     query = Model.query
 
     if filters.public != None:
+        # Retrieve all public models.
         query = query.filter(Model.public == filters.public)
+
+        # Retrieve only the private models of the user, not all private models.
+        if filters.public == "false":
+            query = query.filter(Model.belongs_to == current_user_id)
     if filters.name != None:
         query = query.filter(Model.name == filters.name)
 
