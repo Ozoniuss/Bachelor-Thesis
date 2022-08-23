@@ -20,7 +20,10 @@ def from_db_entity(url: str, entity: Model):
             public=entity.public,
         ),
         links=Links(self=url + "/model/" + str(entity.id)),
-        meta=ModelMeta(current_prediction_labels=entity.current_prediction_labels),
+        meta=ModelMeta(
+            current_prediction_labels=entity.current_prediction_labels,
+            param_count=entity.param_count,
+        ),
         relationships=ModelRelationships(
             belongs_to=Links(related=url + "/users/" + str(entity.belongs_to)),
         ),

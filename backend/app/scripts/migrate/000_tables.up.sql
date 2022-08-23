@@ -35,6 +35,7 @@ CREATE TABLE models(
     -- models might not reference a dataset, but it's still necessary for the
     -- user to provide labels in order to make predictions.
     current_prediction_labels TEXT[] NOT NULL,
+    param_count INTEGER NOT NULL,
     CONSTRAINT fk_author FOREIGN KEY (belongs_to) REFERENCES users (id),
     CONSTRAINT fk_dataset FOREIGN KEY (last_trained_on) REFERENCES datasets (id)
 );

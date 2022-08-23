@@ -1,4 +1,4 @@
-from ast import Mod
+import uuid
 from flask import Blueprint, jsonify, request
 from .model import Model
 from flask_jwt_extended import jwt_required, get_jwt_identity
@@ -6,11 +6,15 @@ from sqlalchemy import or_
 from .resource import from_db_entity
 from app.extensions import db
 from sqlalchemy.exc import NoResultFound
-from ..utils.filesystem import FileSystemException, copy_model, save_model_from_storage
+from ..utils.filesystem import (
+    FileSystemException,
+    copy_model,
+    save_model_from_storage,
+    load_model,
+)
 from ..utils.file_extensions import allowed_file, get_model_allowed_extensions
 from ..utils.sqlalchemy import List
 import json
-import uuid
 from .exceptions import PostModelBadArguments
 from ..public.api import PaginationParams, get_pagination_links, ModelFilters
 from ..public.api.exception import (
@@ -20,6 +24,12 @@ from ..public.api.exception import (
 )
 from ..public.api.model import ModelMutableData
 from .model import get_id
+from keras.models import load_model as keras_load_model
+
+from werkzeug.datastructures import FileStorage
+import os
+from keras import Sequential
+
 
 bp = Blueprint("models", __name__, url_prefix="/models")
 
@@ -210,6 +220,7 @@ def create_model():
             updated_at=model.updated_at,
             public=False,  # model is private when creating
             current_prediction_labels=model.current_prediction_labels,
+            param_count=model.param_count,
         )
 
         db.session.add(new_model)
@@ -249,12 +260,17 @@ def create_model():
         public = body.get("public")
         current_prediction_labels = body.get("current_prediction_labels")
 
+        # In addition, validate that the model is a keras model etc.
+        network = read_model_from_file_storage(from_file)
+        param_count = network.count_params()
+
         new_model = Model(
             name=name,
             belongs_to=current_user_id,
             description=description,
             public=public,
             current_prediction_labels=current_prediction_labels,
+            param_count=param_count,
         )
 
         db.session.add(new_model)
@@ -281,3 +297,11 @@ def validate_update_params(name, description, public):
         raise UpdateModelBadArguments(
             "At least one update parameter has to be specified."
         )
+
+
+def read_model_from_file_storage(fs: FileStorage) -> Sequential:
+    tmp_file = str(uuid.uuid4())
+    fs.save(tmp_file)
+    model = keras_load_model(tmp_file)
+    os.remove(tmp_file)
+    return model

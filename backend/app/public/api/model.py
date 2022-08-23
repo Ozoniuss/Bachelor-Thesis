@@ -22,6 +22,7 @@ class ModelAttributes:
 @dataclass
 class ModelMeta:
     current_prediction_labels: list[str]
+    param_count: int
 
 
 @dataclass

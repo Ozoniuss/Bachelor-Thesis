@@ -1,5 +1,12 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy.dialects.postgresql import UUID, TEXT, TIMESTAMP, BOOLEAN, ARRAY
+from sqlalchemy.dialects.postgresql import (
+    UUID,
+    TEXT,
+    TIMESTAMP,
+    BOOLEAN,
+    ARRAY,
+    INTEGER,
+)
 from sqlalchemy import inspect
 from sqlalchemy.schema import FetchedValue
 from app.extensions import db
@@ -20,6 +27,7 @@ class Model(db.Model):
     public = Column(BOOLEAN)
     last_trained_on = Column(UUID, ForeignKey("datasets.id"), nullable=True)
     current_prediction_labels = Column(ARRAY(TEXT), nullable=False)
+    param_count = Column(INTEGER, nullable=False)
     trainings = db.relationship("Training", backref="training_model", lazy=True)
 
     def __init__(
@@ -29,6 +37,7 @@ class Model(db.Model):
         description,
         public,
         current_prediction_labels,
+        param_count,
         last_trained_on=None,
         created_at=None,
         updated_at=None,
@@ -44,6 +53,7 @@ class Model(db.Model):
         self.updated_at = updated_at
         self.public = public
         self.current_prediction_labels = current_prediction_labels
+        self.param_count = param_count
 
     def __repr__(self) -> str:
         return f"<Model {self.name}>"
