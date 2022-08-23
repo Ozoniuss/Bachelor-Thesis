@@ -52,15 +52,15 @@ def _must_get_model_path(model_id, user_id):
     return f"{os.path.join(MODELS_DIR, user_id, model_id)}.h5"
 
 
-def _get_dataset_path(dataset_name):
-    full_path = os.path.join(DATASETS_DIR, dataset_name)
+def _get_dataset_path(dataset_id):
+    full_path = os.path.join(DATASETS_DIR, dataset_id)
     if not os.path.isdir(full_path):
         raise FileNotFoundError(f"{full_path} is not a valid dataset directory path.")
     return full_path
 
 
-def _must_get_dataset_path(dataset_name):
-    return os.path.join(DATASETS_DIR, dataset_name)
+def _must_get_dataset_path(dataset_id):
+    return os.path.join(DATASETS_DIR, dataset_id)
 
 
 def _get_training_path(training_folder):
@@ -85,31 +85,31 @@ def _must_get_training_path(training_folder):
     return os.path.join(TRAINING_DIR, training_folder)
 
 
-def _get_dataset_label_path(dataset_name, label_name):
-    full_path = os.path.join(DATASETS_DIR, dataset_name, label_name)
+def _get_dataset_label_path(dataset_id, label_name):
+    full_path = os.path.join(DATASETS_DIR, dataset_id, label_name)
     if not os.path.isdir(full_path):
         raise FileNotFoundError(
-            f"{full_path} is not a valid label directory path in dataset {dataset_name}."
+            f"{full_path} is not a valid label directory path in dataset {dataset_id}."
         )
     return full_path
 
 
-def _must_get_dataset_label_path(dataset_name, label_name):
-    return os.path.join(DATASETS_DIR, dataset_name, label_name)
+def _must_get_dataset_label_path(dataset_id, label_name):
+    return os.path.join(DATASETS_DIR, dataset_id, label_name)
 
 
-def _get_dataset_image_path(dataset_name, label_name, image_file):
+def _get_dataset_image_path(dataset_id, label_name, image_file):
     """The image file must be specified with extension."""
-    full_path = os.path.join(DATASETS_DIR, dataset_name, label_name, image_file)
+    full_path = os.path.join(DATASETS_DIR, dataset_id, label_name, image_file)
     if not os.path.isfile(full_path):
         raise FileNotFoundError(
-            f"{full_path} is not a valid image file path in dataset {dataset_name}."
+            f"{full_path} is not a valid image file path in dataset {dataset_id}."
         )
     return full_path
 
 
-def _must_get_dataset_image_path(dataset_name, label_name, image_file):
-    return os.path.join(DATASETS_DIR, dataset_name, label_name, image_file)
+def _must_get_dataset_image_path(dataset_id, label_name, image_file):
+    return os.path.join(DATASETS_DIR, dataset_id, label_name, image_file)
 
 
 def copy_model(old_model_id, old_user_id, new_model_id, new_user_id):
@@ -175,7 +175,7 @@ def create_user_directory(user_id: str):
 
 
 def generate_training_dataset(
-    dataset_name: str,
+    dataset_id: str,
     sample_size: int = 10,
     not_enough_samples=ERROR,
     training_folder=None,
@@ -202,10 +202,10 @@ def generate_training_dataset(
     images from each category used in training.
     """
     try:
-        dataset_path = _get_dataset_path(dataset_name)
+        dataset_path = _get_dataset_path(dataset_id)
     except FileNotFoundError:
         raise FileSystemException(
-            f"Dataset {dataset_name} does not exist on the file system."
+            f"Dataset {dataset_id} does not exist on the file system."
         )
 
     labels = os.listdir(dataset_path)
@@ -248,7 +248,10 @@ def generate_training_dataset(
         except ValueError:
             if not_enough_samples == ERROR:
                 shutil.rmtree(training_path)
-                raise FileSystemException(f"Not enough samples for label {label}.")
+                raise FileSystemException(
+                    f"Not enough samples for label {label}. "
+                    + "Consider specifying on_not_enough_samples to label to use all available samples."
+                )
             elif not_enough_samples == LABEL:
                 for img in glob.glob(os.path.join(dataset_path, label, "*")):
                     shutil.copy(img, images_path)
@@ -292,7 +295,7 @@ def must_remove_testing_dataset(testing_folder: str):
         shutil.rmtree(testing_folder)
 
 
-def get_labels_paginated(dataset_name: str, after: int = 0, limit: int = 0):
+def get_labels_paginated(dataset_id: str, after: int = 0, limit: int = 0):
     """
     Returns the labels from a dataset, starting from the one on position
     specified by "after". Returns at most "limit" labels, or less if there
@@ -305,10 +308,10 @@ def get_labels_paginated(dataset_name: str, after: int = 0, limit: int = 0):
     one.
     """
     try:
-        full_path = _get_dataset_path(dataset_name)
+        full_path = _get_dataset_path(dataset_id)
     except FileNotFoundError:
         raise FileSystemException(
-            f"Could not find dataset {dataset_name} on the file system."
+            f"Could not find dataset {dataset_id} on the file system."
         )
     next = 0
     if after + limit < len(os.listdir(full_path)):
@@ -320,17 +323,17 @@ def get_labels_paginated(dataset_name: str, after: int = 0, limit: int = 0):
 
 
 def get_images_paginated(
-    dataset_name: str, label_name: str, after: int = 0, limit: int = 0
+    dataset_id: str, label_name: str, after: int = 0, limit: int = 0
 ) -> list[str]:
     """
     Returns the images from a dataset with a specific label. Behaves exactly
     like "getLabelsPaginated", see that function for documentation.
     """
     try:
-        full_path = _get_dataset_label_path(dataset_name, label_name)
+        full_path = _get_dataset_label_path(dataset_id, label_name)
     except FileNotFoundError:
         raise FileSystemException(
-            f"Could not find label {label_name} of dataset {dataset_name} on the file system."
+            f"Could not find label {label_name} of dataset {dataset_id} on the file system."
         )
     glob_path = os.path.join(full_path, "*")
     next = 0
