@@ -3,7 +3,6 @@ Models the training resource and the api interaction.
 """
 
 from dataclasses import dataclass
-from typing import Union
 import uuid
 
 from .common import Links
@@ -14,9 +13,9 @@ class TrainingAttributes:
     epochs: int
     accuracy: list[float]
     loss: list[float]
-    val_accuracy: Union[list[float], None]
-    val_loss: Union[list[float], None]
-    notes: Union[str, None]
+    val_accuracy: list[float]
+    val_loss: list[float]
+    notes: str
     created_at: str
 
 
