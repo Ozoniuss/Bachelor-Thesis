@@ -53,5 +53,5 @@ CREATE TABLE trainings(
     created_at TIMESTAMPTZ,
     CONSTRAINT fk_model FOREIGN KEY (model) REFERENCES models (id) ON DELETE CASCADE,
     -- cannot delete datasets that were already used for training
-    CONSTRAINT fk_dataset FOREIGN KEY (dataset) REFERENCES models(id)
+    CONSTRAINT fk_dataset FOREIGN KEY (dataset) REFERENCES datasets (id)
 );
