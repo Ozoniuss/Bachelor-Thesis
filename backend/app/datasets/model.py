@@ -15,7 +15,8 @@ class Dataset(db.Model):
     description = Column(TEXT)
     labels = Column(ARRAY(TEXT), nullable=False)
     created_at = Column(TIMESTAMP, nullable=True)
-    trainings = db.relationship("Training", backref="training_dataset", lazy=True)
+    models = db.relationship("Model", backref="models_last_trained_on", lazy=True)
+    trainings = db.relationship("Training", backref="trainings_dataset", lazy=True)
 
     def __init__(self, name, description, labels, id=None, created_at=None) -> None:
         super().__init__()

@@ -28,7 +28,7 @@ class Model(db.Model):
     last_trained_on = Column(UUID, ForeignKey("datasets.id"), nullable=True)
     current_prediction_labels = Column(ARRAY(TEXT), nullable=False)
     param_count = Column(INTEGER, nullable=False)
-    trainings = db.relationship("Training", backref="training_model", lazy=True)
+    trainings = db.relationship("Training", backref="model_model", lazy=True)
 
     def __init__(
         self,

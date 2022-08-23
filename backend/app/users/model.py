@@ -18,7 +18,7 @@ class User(db.Model):
     email = Column(TEXT, unique=True, nullable=False)
     created_at = Column(TIMESTAMP, nullable=True)
     updated_at = Column(TIMESTAMP, nullable=True)
-    models = db.relationship("Model", backref="author", lazy=True)
+    models = db.relationship("Model", backref="models_belongs_to", lazy=True)
 
     def __init__(
         self, username, password, email, id=None, created_at=None, updated_at=None

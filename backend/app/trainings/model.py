@@ -10,7 +10,7 @@ from sqlalchemy.schema import FetchedValue
 class Training(db.Model):
     """Model for the trainings table"""
 
-    __tablename__ = "traininigs"
+    __tablename__ = "trainings"
 
     id = Column(UUID, primary_key=True, server_default=FetchedValue())
     model = Column(UUID, ForeignKey("models.id"), nullable=False)
@@ -47,7 +47,7 @@ class Training(db.Model):
         self.created_at = created_at
 
     def __repr__(self) -> str:
-        return f"<Training {self.training}>"
+        return f"<Training {self.model, self.dataset}>"
 
     def as_dict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
