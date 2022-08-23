@@ -60,6 +60,21 @@ def list_datasets():
     )
 
 
+@bp.get("/<dataset_id>")
+@jwt_required()
+def get_dataset(dataset_id):
+
+    dataset: Dataset
+
+    try:
+        dataset = Dataset.query.filter_by(id=dataset_id).one()
+    except NoResultFound:
+        err = NotFoundException("Dataset not found.")
+        return jsonify(errors=[err.as_dict()]), err.code
+
+    return jsonify(data=from_db_entity(OCTONN_ADDRESS, dataset))
+
+
 @bp.get("/<dataset_id>/labels")
 @jwt_required()
 def list_labels(dataset_id):
