@@ -1,40 +1,50 @@
-from statistics import mode
+from typing import Union
 from keras import Sequential
 from keras.models import load_model
 from keras.optimizers import adam_v2
 from keras.losses import CategoricalCrossentropy
-from keras.utils import image_dataset_from_directory
-from keras.layers import Rescaling, Dense
+from keras.layers import Dense
+from keras.callbacks import Callback
 from ..utils.filesystem import (
     LABEL,
     ERROR,
     GLOBAL,
-    generateTrainingDataset,
-    removeTrainingDataset,
+    generate_training_dataset,
+    remove_training_dataset,
     FileSystemException,
 )
 from .parameters import TrainingParametersException
 from keras.callbacks import Callback
 from ..extensions import socketio
 from ..utils.list import same_labels
+from ..utils.dataset_preparation import get_dataset_iterators
+from ..utils.filesystem import load_model
+from contextlib import contextmanager
 
 
 class TrainingException(Exception):
     pass
 
 
-class CustomCallback(Callback):
-    def __init__(self, client_id):
-        self.client_id = client_id
+class WebsocketCallback(Callback):
+    def __init__(self, sid):
+        self.sid = sid
 
-    def on_epoch_begin(self, epoch, logs=None):
-        socketio.emit(self.client_id, "epoch fucking started")
+    def on_epoch_end(self, epoch, logs=None):
+        stats = logs
+        # For some reason epoch starts with 0.
+        stats["epoch"] = epoch + 1
+        socketio.emit("training_status", stats, to=self.sid)
+
+
+# def with_training_dataset(dataset_id, sample_size, on_not_enough_samples):
+#     training_folder = generate
 
 
 def perform_training(
-    client_id: str,
-    model_path: str,
-    dataset_name: str,
+    model_id: str,
+    user_id: str,
+    dataset_id: str,
     model_labels: str,
     dataset_labels: str,
     epochs: int,
@@ -45,6 +55,8 @@ def perform_training(
     validation_split: float,
     seed: int,
     train_all_network: bool,
+    custom_callback: Union[Callback, None],
+    training_folder=None,
 ):
     """
     This function trains a model on a specific dataset. The following are
@@ -77,10 +89,12 @@ def perform_training(
     and the activation function of the output layer.
     """
 
-    model: Sequential = load_model(model_path)
+    model: Sequential = load_model(model_id, user_id)
     history = None
     out = None
 
+    # Having the same labels means not changing the structure of the model, but
+    # rather just performing additional training.
     if not same_labels(model_labels, dataset_labels):
         new_model = Sequential()
         for layer in model.layers[:-1]:
@@ -88,7 +102,14 @@ def perform_training(
         new_model.add(Dense(len(dataset_labels)))
         model = new_model
 
+    # Set either all layers as trainable or only the last layer.
     if train_all_network:
+        if model.count_params() > 20_000:
+            raise TrainingParametersException(
+                "Model cannot be trained entirely because it has too many"
+                + "trainable params. This option is only available for models "
+                + "with at most 20,000 parameters."
+            )
         for idx, _ in enumerate(model.layers):
             model.layers[idx].trainable = True
     else:
@@ -102,77 +123,32 @@ def perform_training(
         metrics="accuracy",
     )
 
+    # This is the point where the dataset is added to the filesystem. The model
+    # must then perform a cleanup operation.
     try:
-
-        training_path, out = generateTrainingDataset(
-            dataset_name=dataset_name,
+        training_folder, out = generate_training_dataset(
+            dataset_id=dataset_id,
             sample_size=sample_size,
             not_enough_samples=on_not_enough_samples,
+            training_folder=training_folder,
         )
     except FileSystemException as e:
         raise TrainingParametersException(str(e))
 
-    train_ds = valid_ds = train_normalized_ds = valid_normalized_ds = None
-    normalization_layer = Rescaling(1.0 / 255)
-
-    # Setting this to 0 in image_dataset_from_directory return an error.
-    if validation_split == 0:
-
-        train_ds = image_dataset_from_directory(
-            directory=training_path,
-            labels="inferred",
-            label_mode="categorical",
-            seed=seed,
-            color_mode="rgb",
-            batch_size=10,
-            image_size=(224, 224),
-            subset="training",
-            shuffle=True,
-        )
-        train_normalized_ds = train_ds.map(lambda x, y: (normalization_layer(x), y))
-
-    else:
-        train_ds = image_dataset_from_directory(
-            directory=training_path,
-            labels="inferred",
-            label_mode="categorical",
-            seed=seed,
-            color_mode="rgb",
-            batch_size=10,
-            image_size=(224, 224),
-            validation_split=validation_split,
-            subset="training",
-            shuffle=True,
-        )
-        train_normalized_ds = train_ds.map(lambda x, y: (normalization_layer(x), y))
-
-        valid_ds = image_dataset_from_directory(
-            directory=training_path,
-            labels="inferred",
-            label_mode="categorical",
-            seed=seed,
-            color_mode="rgb",
-            batch_size=10,
-            image_size=(224, 224),
-            validation_split=validation_split,
-            subset="validation",
-            shuffle=True,
-        )
-
-        train_normalized_ds = train_ds.map(lambda x, y: (normalization_layer(x), y))
-        valid_normalized_ds = valid_ds.map(lambda x, y: (normalization_layer(x), y))
+    train_ds, valid_ds = get_dataset_iterators(training_folder, validation_split, seed)
 
     try:
         history = model.fit(
-            train_normalized_ds,
-            validation_data=valid_normalized_ds,
+            train_ds,
+            validation_data=valid_ds,
             epochs=epochs,
             batch_size=batch_size,
-            callbacks=[CustomCallback(client_id)],
+            callbacks=[custom_callback],
         )
     except Exception as e:
         raise TrainingException(str(e))
     finally:
-        removeTrainingDataset(training_path)
+        # Perform the cleanup operation.
+        remove_training_dataset(training_folder)
 
     return history, out

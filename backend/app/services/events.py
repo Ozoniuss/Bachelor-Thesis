@@ -1,35 +1,36 @@
 from ..extensions import socketio
 from .parameters import validate_training_parameters, TrainingParametersException
 from flask_socketio import emit, send
-from .perform_training import perform_training, TrainingException
+from .perform_training import perform_training, TrainingException, WebsocketCallback
 from flask import request
 
-# Receive the test request from client and send back a test response
-@socketio.on("hello")
-def handle_message(data):
-    print("received message: " + str(data))
-    print(data)
-    print(data["data"])
+from flask import current_app
+from ..app import redis_db
+from app.extensions import cache
+
+from ..trainings.model import Training
 
 
 @socketio.on("connect")
 def connect_hander():
-    print(request.sid)
+    current_app.logger.info(f"Ws client disconnected: {request.sid}")
 
 
 @socketio.on("disconnect")
 def disconnect_handler():
-    print(request.sid)
-    print("fucking disconnected")
+    current_app.logger.info("Ws client connected:", request.sid)
 
 
 @socketio.on("train")
 def handle_training(args):
-    #     args = request.args
+    sid = request.sid
 
     # parameters should have already been validated using the validate endpoint
-    client_id = args.get("client_id")
+    model_id = args.get("model_id")
+    user_id = args.get("user_id")
     dataset_id = args.get("dataset_id")
+    model_labels = args.get("model_labels")
+    dataset_labels = args.get("dataset_labels")
     epochs = args.get("epochs")
     batch_size = args.get("batch_size")
     learning_rate = args.get("learning_rate")
@@ -37,19 +38,11 @@ def handle_training(args):
     on_not_enough_samples = args.get("on_not_enough_samples")
     validation_split = args.get("validation_split")
     seed = args.get("seed")
+    train_all_network = args.get("train_all_network")
 
     history = out = None
-    print(
-        dataset_id,
-        epochs,
-        batch_size,
-        learning_rate,
-        sample_size,
-        on_not_enough_samples,
-        validation_split,
-        seed,
-    )
-
+    # This is more of a security concern, since parameters have already been
+    # validated.
     try:
         validate_training_parameters(
             epochs=epochs,
@@ -59,28 +52,58 @@ def handle_training(args):
             validation_split=validation_split,
             seed=seed,
         )
+
+    # This should never happen
     except TrainingParametersException as e:
-        print(e)
+        current_app.logger.error(
+            f"Could not validate parameters, even though they "
+            + f"shoul have already been validated: {str(e)}"
+        )
+        send("An error occured during server validation.")
+        return
+
+    cb = WebsocketCallback(sid)
 
     try:
         history, out = perform_training(
-            client_id=client_id,
-            model_path=r"C:\personal projects\Bachelor-Thesis\models\01232321-3222-2122-bb21-6a21abab1121\34a34a21-5671-0aa2-ff31-a2645cd12fe3.h5",
-            dataset_name="cats-vs-dogs",
-            output_layer_size=2,
-            epochs=10,
-            batch_size=10,
-            sample_size=500,
+            model_id=model_id,
+            user_id=user_id,
+            dataset_id=str(dataset_id),
+            model_labels=model_labels,
+            dataset_labels=dataset_labels,
+            epochs=epochs,
+            batch_size=batch_size,
+            sample_size=sample_size,
             learning_rate=learning_rate,
-            on_not_enough_samples="error",
-            validation_split=0.2,
-            seed=23,
+            on_not_enough_samples=on_not_enough_samples,
+            validation_split=validation_split,
+            seed=seed,
+            train_all_network=train_all_network,
+            custom_callback=cb,
+            training_folder=sid,
         )
 
     except TrainingParametersException as e:
-        print(e)
+        current_app.logger.info(
+            msg=f"Could not start training for client {sid}: {str(e)}"
+        )
+        send(str(e))
+        return
     except TrainingException as e:
-        print(e)
+        current_app.logger.info(
+            msg=f"An exception occured during training for client {sid}: {str(e)}"
+        )
+        send(str(e))
+        return
 
-    print(history)
+    # training = Training(
+    #     model=model_id,
+    #     dataset=dataset_id,
+    #     epochs=epochs,
+    #     accuracy=history.history.get("acc")
+    # )
+    # cache.set(str(sid) + "_history", history.history)
+    # print(cache.get(str(sid) + "_history"))
+
+    print(history.history)
     print(out)

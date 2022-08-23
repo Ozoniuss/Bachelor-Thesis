@@ -61,6 +61,7 @@ def validate_params(model_id):
     """
     args = request.args
     dataset_id = args.get("dataset_id", default=str(uuid.UUID(int=0)), type=str)
+    current_user = get_jwt_identity()
 
     epochs = args.get(EPOCHS, default=DEFAULT_EPOCHS, type=int)
     batch_size = args.get(BATCH_SIZE, default=DEFAULT_BATCH_SIZE, type=int)
@@ -90,11 +91,24 @@ def validate_params(model_id):
         err = BadRequestException(str(e))
         return (jsonify(errors=[err.as_dict()]), err.code)
 
+    model: Model
+
     try:
-        model = db.session.query(Model).filter_by(id=model_id).one()
+        model = (
+            Model.query.filter_by(id=model_id)
+            .filter(or_(Model.belongs_to == current_user, Model.public == True))
+            .one()
+        )
     except NoResultFound:
         err = NotFoundException(f"Model {model_id} not found.")
         return jsonify(errors=[err.as_dict()]), err.code
+
+    if train_all_network and model.param_count > 20_000:
+        err = BadRequestException(
+            "Cannot train the entire network because it has too many"
+            + "trainable params. This option is only available for models "
+            + "with at most 20,000 parameters."
+        )
 
     try:
         dataset = (db.session.query(Dataset).filter_by(id=dataset_id)).one()
@@ -109,7 +123,8 @@ def validate_params(model_id):
         jsonify(
             data={
                 "model_id": model.id,
-                "dataset_name": dataset.name,
+                "user_id": current_user,
+                "dataset_id": dataset.id,
                 "model_labels": model.current_prediction_labels,
                 "dataset_labels": dataset.labels,
                 EPOCHS: epochs,
@@ -119,77 +134,11 @@ def validate_params(model_id):
                 ON_NOT_ENOUGH_SAMPLES: on_not_enough_samples,
                 VALIDATION_SPLIT: validation_split,
                 SEED: seed,
+                TRAIN_ALL_NETWORK: train_all_network,
             }
         ),
         200,
     )
-
-
-@bp.get("/training")
-@jwt_required()
-def train_model(model_id):
-
-    args = request.args
-    dataset_id = args.get("dataset_id", default=str(uuid.UUID(int=0)), type=str)
-    epochs = args.get("epochs", default=10, type=int)
-    batch_size = args.get("batch_size", default=10, type=int)
-    learning_rate = args.get("learning_rate", default=0.0001, type=float)
-    sample_size = args.get("sample_size", default=1000, type=int)
-    on_not_enough_samples = args.get("on_not_enough_samples", default="error", type=str)
-    validation_split = args.get("validation_split", default=0.2, type=float)
-    seed = args.get("seed", default=random.randint(1, 256), type=int)
-
-    try:
-        validate_training_parameters(
-            epochs=epochs,
-            batch_size=batch_size,
-            learning_rate=learning_rate,
-            on_not_enough_samples=on_not_enough_samples,
-            validation_split=validation_split,
-            seed=seed,
-        )
-    except TrainingParametersException as e:
-        err = BadRequestException(str(e))
-        return (jsonify(errors=[err.as_dict()]), err.code)
-
-    model: Model
-    dataset: Dataset
-
-    try:
-        model = db.session.query(Model).filter_by(id=model_id).one()
-    except NoResultFound:
-        err = NotFoundException(f"Model {model_id} not found.")
-        return jsonify(errors=[err.as_dict()]), err.code
-
-    try:
-        dataset = (db.session.query(Dataset).filter_by(id=dataset_id)).one()
-    except NoResultFound:
-        err = NotFoundException(f"Model {dataset_id} not found.")
-        return jsonify(errors=[err.as_dict()]), err.code
-
-    try:
-        history, out = perform_training(
-            model_path=model.location,
-            dataset_name=dataset.name,
-            output_layer_size=0,
-            epochs=epochs,
-            batch_size=batch_size,
-            learning_rate=learning_rate,
-            sample_size=sample_size,
-            on_not_enough_samples=on_not_enough_samples,
-            validation_split=validation_split,
-            seed=seed,
-        )
-    # Since this function creates the training dataset, it is only possible here
-    # to determine if there were enough samples (if set to error).
-    except TrainingParametersException as e:
-        err = BadRequestException(str(e))
-        return jsonify(errors=[err.as_dict()]), err.code
-    except TrainingException as e:
-        err = InternalServerException(str(e))
-        return jsonify(errors=[err.as_dict()]), err.code
-
-    return jsonify(results=history.history, output=out), 200
 
 
 # For this operation we would ideally want to cache the stored model so that
