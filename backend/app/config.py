@@ -38,8 +38,12 @@ class Config:
     JWT_HEADER_TYPE = "Bearer"
     JWT_TOKEN_LOCATION = "headers"
 
-    CACHE_TYPE = "SimpleCache"
-    CACHE_DEFAULT_TIMEOUT = 1000
+    CACHE_TYPE = "RedisCache"
+    CACHE_DEFAULT_TIMEOUT = 3000
+    CACHE_REDIS_HOST = "localhost"
+    CACHE_REDIS_PORT = 6379
+    CACHE_REDIS_DB = 0
+    CACHE_REDIS_URL = "redis://localhost:6379/0"
     # BROKER_URL = os.getenv("BROKER_URL") or "redis://localhost:6379/0"
     # CELERY_BACKEND = (
     #     os.getenv("CELERY_BACKEND")
@@ -48,6 +52,8 @@ class Config:
     SQLALCHEMY_DATABASE_URI = "postgresql://{0}:{1}@{2}:{3}/{4}".format(
         DB_USER, DB_PASS, DB_ADDRESS, DB_PORT, DB_NAME
     )
+
+    # SOCK_SERVER_OPTIONS = {"ping_interval": 25}
 
 
 # class DevelopmentConfig(Config):

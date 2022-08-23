@@ -1,2 +1,2 @@
-from .app import create_app, jwt_redis_blocklist
+from .app import create_app, redis_db
 from app.services import events

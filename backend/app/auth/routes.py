@@ -22,7 +22,7 @@ from ..public.api.exception import (
     InternalServerException,
 )
 
-from app import jwt_redis_blocklist
+from app import redis_db
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -32,7 +32,7 @@ ACCESS_EXPIRES = timedelta(days=30)
 @jwt.token_in_blocklist_loader
 def check_if_token_is_revoked(jwt_header, jwt_payload: dict):
     jti = jwt_payload["jti"]
-    token_in_redis = jwt_redis_blocklist.get(jti)
+    token_in_redis = redis_db.get(jti)
     return token_in_redis is not None
 
 
@@ -139,7 +139,7 @@ def logout():
     token = get_jwt()
     jti = token["jti"]
     ttype = token["type"]
-    jwt_redis_blocklist.set(jti, "", ex=int(ACCESS_EXPIRES.total_seconds()))
+    redis_db.set(jti, "", ex=int(ACCESS_EXPIRES.total_seconds()))
     return jsonify(
         data={"message": f"{ttype.capitalize()} token successfully revoked."}
     )
