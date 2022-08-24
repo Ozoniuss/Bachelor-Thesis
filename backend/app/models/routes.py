@@ -160,8 +160,8 @@ def update_model(model_id):
 
     new_data = ModelMutableData(
         name=request.json.get("name"),
-        description=request.json("description"),
-        public=request.json("public"),
+        description=request.json.get("description"),
+        public=request.json.get("public"),
     )
 
     try:
