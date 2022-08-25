@@ -362,6 +362,6 @@ def save_model(model: Sequential, model_id: str, user_id: str):
     Saves a keras model from memory to the filesystem.
     """
     full_path = _must_get_model_path(model_id, user_id)
-    if os.isfile(full_path):
+    if os.path.isfile(full_path):
         raise FileSystemException(f"There aleady exists a model saved at {full_path}")
     keras_save_model(model, full_path)
