@@ -1,10 +1,11 @@
+from genericpath import isfile
 import os
 import random
 import uuid
 import shutil
 import glob
 from werkzeug.datastructures import FileStorage
-from keras.models import load_model as keras_load_model
+from keras.models import load_model as keras_load_model, save_model as keras_save_model
 from keras import Sequential
 
 # todo: env variables
@@ -354,3 +355,13 @@ def load_model(model_id, user_id) -> Sequential:
         return keras_load_model(full_path)
     except FileNotFoundError:
         raise FileSystemException("Model is not stored on the file system.")
+
+
+def save_model(model: Sequential, model_id: str, user_id: str):
+    """
+    Saves a keras model from memory to the filesystem.
+    """
+    full_path = _must_get_model_path(model_id, user_id)
+    if os.isfile(full_path):
+        raise FileSystemException(f"There aleady exists a model saved at {full_path}")
+    keras_save_model(model, full_path)
