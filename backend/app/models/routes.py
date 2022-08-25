@@ -10,7 +10,7 @@ from ..utils.filesystem import (
     FileSystemException,
     copy_model,
     save_model_from_storage,
-    load_model,
+    must_remove_model,
 )
 from ..utils.file_extensions import allowed_file, get_model_allowed_extensions
 from ..utils.sqlalchemy import List
@@ -148,6 +148,8 @@ def delete_model(model_id):
         err = NotFoundException("Model not found.")
         return jsonify(errors=[err.as_dict()]), err.code
 
+    must_remove_model(model_id, current_user)
+
     return jsonify(), 200
 
 
@@ -256,7 +258,7 @@ def create_model():
         body_data = request.form.get("body")
         if body_data == None:
             err = BadRequestException(
-                "Model details not specified, add them" + "with the body key."
+                "Model details not specified, add them " + "with the body key."
             )
             return jsonify(errors=[err.as_dict()]), err.code
 
