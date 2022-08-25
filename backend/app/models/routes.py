@@ -264,7 +264,6 @@ def create_model():
 
         name = body.get("name")
         description = body.get("description")
-        public = body.get("public")
         current_prediction_labels = body.get("current_prediction_labels")
 
         # In addition, validate that the model is a keras model etc.
@@ -275,7 +274,7 @@ def create_model():
             name=name,
             belongs_to=current_user_id,
             description=description,
-            public=public,
+            public=False,
             current_prediction_labels=current_prediction_labels,
             param_count=param_count,
         )
