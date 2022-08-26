@@ -211,7 +211,7 @@ def download_model(model_id):
         return jsonify(errors=[err.as_dict()]), err.code
 
     return (
-        send_file(_get_model_path(model.id, model.belongs_to), as_attachment=False),
+        send_file(_get_model_path(model.id, model.belongs_to), as_attachment=True),
         200,
     )
 
