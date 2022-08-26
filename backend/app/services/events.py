@@ -56,7 +56,6 @@ def save_new_model(message):
     """
     This function saves the trained model as a new model in the databse.
     """
-    print(message)
     sid = request.sid
     training: Training = cache.get(cache_training_key(sid))
     new_model: Model = cache.get(cache_new_db_model_key(sid))
@@ -88,12 +87,54 @@ def save_new_model(message):
 
     emit("info", "Succesfully saved new model.", to=sid)
 
+    must_remove_model(sid, user_id)
     clean_cache(sid)
 
 
 @socketio.on("overwrite")
-def overwrite_model():
-    pass
+def overwrite_model(message):
+    """
+    This function overwrites a new trained model over an existing model.
+    """
+    sid = request.sid
+    if cache.get(sid) == None:
+        emit(
+            "error",
+            {
+                "data": "Training does not exist. Make sure training is still not in progress"
+            },
+            to=sid,
+        )
+        return
+
+    training: Training = cache.get(cache_training_key(sid))
+    old_model_id: Model = cache.get(cache_db_model_id_key(sid))
+    new_model: Model = cache.get(cache_new_db_model_key(sid))
+    user_id = cache.get(cache_user_id_key(sid))
+
+    # Overwrite the existing model's details with the new ones computed after
+    # training.
+    from_db: Model = Model.query.filter(Model.id == old_model_id).one()
+
+    from_db.last_trained_on = new_model.last_trained_on
+    from_db.current_prediction_labels = new_model.current_prediction_labels
+    from_db.param_count = new_model.param_count
+
+    db.session.add(training)
+    db.session.commit()
+
+    # New model is saved in the user's directory in a file with the sid name.
+    try:
+        copy_model(sid, user_id, str(old_model_id), user_id, overwrite=True)
+    except FileSystemException as f:
+        emit("error", str(f), to=sid)
+        db.session.rollback()
+        return
+
+    emit("info", "Model succesfully overwritten.", to=sid)
+
+    must_remove_model(sid, user_id)
+    clean_cache(sid)
 
 
 @socketio.on("discard")
@@ -245,7 +286,7 @@ def handle_training(msg):
         param_count=model.count_params(),
     )
 
-    init_cache(sid, message.user_id, training, model_db, new_model_db)
+    init_cache(sid, message.user_id, training, model_db.id, new_model_db)
 
     # Save the model temporarily in the user's director.
     save_model(model, sid, message.user_id)
@@ -258,16 +299,16 @@ def handle_training(msg):
     return
 
 
-def init_cache(sid, user_id, training, model_db, new_model_db):
+def init_cache(sid, user_id, training, model_db_id, new_model_db):
     cache.set(cache_training_key(sid), training)
-    cache.set(cache_db_model_key(sid), model_db)
+    cache.set(cache_db_model_id_key(sid), str(model_db_id))
     cache.set(cache_new_db_model_key(sid), new_model_db)
     cache.set(cache_user_id_key(sid), user_id)
 
 
 def clean_cache(sid):
     cache.delete(cache_training_key(sid))
-    cache.delete(cache_db_model_key(sid))
+    cache.delete(cache_db_model_id_key(sid))
     cache.delete(cache_new_db_model_key(sid))
     cache.delete(cache_user_id_key(sid))
     cache.delete(sid)
@@ -277,7 +318,7 @@ def cache_training_key(sid: str) -> str:
     return f"training_{sid}"
 
 
-def cache_db_model_key(sid: str) -> str:
+def cache_db_model_id_key(sid: str) -> str:
     return f"model_db_{sid}"
 
 
