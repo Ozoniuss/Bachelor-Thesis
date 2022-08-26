@@ -63,8 +63,3 @@ def from_dict(message) -> TrainModelMessage:
             train_all_network=message.get("parameters").get(TRAIN_ALL_NETWORK),
         ),
     )
-
-
-ERROR_TYPE = "error"
-SUCCESS_TYPE = "success"
-INFO_TYPE = "info"
