@@ -147,7 +147,6 @@ def delete_model(model_id):
     if updated_rows == 0:
         err = NotFoundException("Model not found.")
         return jsonify(errors=[err.as_dict()]), err.code
-
     must_remove_model(model_id, current_user)
 
     return jsonify(), 200
