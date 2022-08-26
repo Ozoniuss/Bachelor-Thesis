@@ -21,7 +21,7 @@ class Training(db.Model):
     val_accuracy = Column(ARRAY(FLOAT), nullable=True)
     val_loss = Column(ARRAY(FLOAT), nullable=True)
     notes = Column(TEXT, nullable=True)
-    created_at = Column(TIMESTAMP, nullable=True, server_default=FetchedValue())
+    created_at = Column(TIMESTAMP, nullable=False, server_default=FetchedValue())
 
     def __init__(
         self,

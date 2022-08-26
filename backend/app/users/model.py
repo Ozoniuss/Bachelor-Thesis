@@ -16,8 +16,8 @@ class User(db.Model):
     username = Column(TEXT, unique=True, nullable=False)
     password = Column(TEXT, nullable=False)
     email = Column(TEXT, unique=True, nullable=False)
-    created_at = Column(TIMESTAMP, nullable=True)
-    updated_at = Column(TIMESTAMP, nullable=True)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=FetchedValue())
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=FetchedValue())
     models = db.relationship("Model", backref="models_belongs_to", lazy=True)
 
     def __init__(

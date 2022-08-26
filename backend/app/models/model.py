@@ -11,6 +11,7 @@ from sqlalchemy import inspect
 from sqlalchemy.schema import FetchedValue
 from app.extensions import db
 from ..utils.sqlalchemy import as_dict
+from sqlalchemy.sql import func
 
 
 class Model(db.Model):
@@ -22,8 +23,8 @@ class Model(db.Model):
     name = Column(TEXT, nullable=False)
     belongs_to = Column(UUID, ForeignKey("users.id"))
     description = Column(TEXT)
-    created_at = Column(TIMESTAMP, nullable=True)
-    updated_at = Column(TIMESTAMP, nullable=True)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=FetchedValue())
+    updated_at = Column(TIMESTAMP, nullable=False, server_default=FetchedValue())
     public = Column(BOOLEAN)
     last_trained_on = Column(UUID, ForeignKey("datasets.id"), nullable=True)
     current_prediction_labels = Column(ARRAY(TEXT), nullable=False)

@@ -14,7 +14,7 @@ class Dataset(db.Model):
     name = Column(TEXT, unique=True, nullable=False)
     description = Column(TEXT)
     labels = Column(ARRAY(TEXT), nullable=False)
-    created_at = Column(TIMESTAMP, nullable=True)
+    created_at = Column(TIMESTAMP, nullable=False, server_default=FetchedValue())
     models = db.relationship("Model", backref="models_last_trained_on", lazy=True)
     trainings = db.relationship("Training", backref="trainings_dataset", lazy=True)
 
