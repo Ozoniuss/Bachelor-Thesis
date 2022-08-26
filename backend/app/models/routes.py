@@ -1,5 +1,5 @@
 import uuid
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, send_file, send_from_directory
 from .model import Model
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import or_
@@ -11,6 +11,8 @@ from ..utils.filesystem import (
     copy_model,
     save_model_from_storage,
     must_remove_model,
+    _get_model_path,
+    _get_models_directory,
 )
 from ..utils.file_extensions import allowed_file, get_model_allowed_extensions
 from ..utils.sqlalchemy import List
@@ -188,6 +190,30 @@ def update_model(model_id):
     db.session.commit()
 
     return jsonify(data=from_db_entity(OCTONN_ADDRESS, model)), 200
+
+
+@bp.get("/<model_id>/downloads")
+@jwt_required()
+def download_model(model_id):
+
+    model: Model
+    current_user = get_jwt_identity()
+
+    # Query the model to validate permissions and check if it's in the database.
+    try:
+        model = (
+            Model.query.filter_by(id=model_id)
+            .filter(or_(Model.belongs_to == current_user, Model.public == True))
+            .one()
+        )
+    except NoResultFound:
+        err = NotFoundException("Model not found.")
+        return jsonify(errors=[err.as_dict()]), err.code
+
+    return (
+        send_file(_get_model_path(model.id, model.belongs_to), as_attachment=False),
+        200,
+    )
 
 
 @bp.post("/")
