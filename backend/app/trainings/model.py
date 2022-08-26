@@ -21,7 +21,7 @@ class Training(db.Model):
     val_accuracy = Column(ARRAY(FLOAT), nullable=True)
     val_loss = Column(ARRAY(FLOAT), nullable=True)
     notes = Column(TEXT, nullable=True)
-    created_at = Column(TIMESTAMP, nullable=True)
+    created_at = Column(TIMESTAMP, nullable=True, server_default=FetchedValue())
 
     def __init__(
         self,
@@ -51,3 +51,7 @@ class Training(db.Model):
 
     def as_dict(self):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
+
+
+def get_id(t: Training) -> str:
+    return str(t.id)
