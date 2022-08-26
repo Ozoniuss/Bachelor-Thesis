@@ -113,7 +113,9 @@ def _must_get_dataset_image_path(dataset_id, label_name, image_file):
     return os.path.join(DATASETS_DIR, dataset_id, label_name, image_file)
 
 
-def copy_model(old_model_id, old_user_id, new_model_id, new_user_id):
+def copy_model(
+    old_model_id, old_user_id, new_model_id, new_user_id, overwrite: bool = False
+):
     """
     Throws an error if there already exists a file with the new
     model's identifier in the new user's directory.
@@ -129,10 +131,11 @@ def copy_model(old_model_id, old_user_id, new_model_id, new_user_id):
     new_path = _must_get_model_path(new_model_id, new_user_id)
     print(new_path)
 
-    if os.path.isfile(new_path):
-        raise FileSystemException(
-            "Cannot move model to new location because a file already exists there."
-        )
+    if not overwrite:
+        if os.path.isfile(new_path):
+            raise FileSystemException(
+                "Cannot move model to new location because a file already exists there."
+            )
 
     shutil.copy(old_path, new_path)
 
@@ -365,3 +368,16 @@ def save_model(model: Sequential, model_id: str, user_id: str):
     if os.path.isfile(full_path):
         raise FileSystemException(f"There aleady exists a model saved at {full_path}")
     keras_save_model(model, full_path)
+
+
+def remove_model(model_id: str, user_id: str):
+    full_path = _must_get_model_path(model_id, user_id)
+    if not os.path.isfile(full_path):
+        raise FileSystemException(f"There exist no model at path {full_path}")
+    os.remove(full_path)
+
+
+def must_remove_model(model_id: str, user_id: str):
+    full_path = _must_get_model_path(model_id, user_id)
+    if os.path.isfile(full_path):
+        os.remove(full_path)
