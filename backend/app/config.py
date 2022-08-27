@@ -53,6 +53,8 @@ class Config:
         DB_USER, DB_PASS, DB_ADDRESS, DB_PORT, DB_NAME
     )
 
+    CORS_EXPOSE_HEADERS = ["Content-Disposition"]
+
     # SOCK_SERVER_OPTIONS = {"ping_interval": 25}
 
 
