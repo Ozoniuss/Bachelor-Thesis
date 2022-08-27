@@ -1,9 +1,11 @@
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import jwt_required
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from app.models.model import Model
 from app.trainings.resource import from_db_entity
 
 from .model import Training, get_id
 from sqlalchemy.exc import NoResultFound, StatementError
+from sqlalchemy import or_
 from ..public.api.exception import BadRequestException, NotFoundException
 
 from ..public.api import PaginationParams, get_pagination_links
@@ -17,6 +19,19 @@ OCTONN_ADDRESS = "http://localhost:5000"
 @bp.get("/")
 @jwt_required()
 def list_trainings(model_id):
+
+    current_user = get_jwt_identity()
+    # Access to the model is required to display trainings.
+    try:
+        _ = (
+            Model.query.filter_by(id=model_id)
+            .filter(or_(Model.belongs_to == current_user, Model.public == True))
+            .one()
+        )
+    except NoResultFound:
+        err = NotFoundException("Model not found.")
+        return jsonify(errors=[err.as_dict()]), err.code
+
     args = request.args
     req_pag = PaginationParams(
         after=args.get("after", default="", type=str),
@@ -31,7 +46,7 @@ def list_trainings(model_id):
     # Column needs to be unique, but due to the way trainings are created it is
     # guaranteed that is the case.
     col = Training.created_at
-    query = Training.query
+    query = Training.query.filter_by(model=model_id)
 
     all_trainings, prev, next = List(
         query=query,
@@ -62,6 +77,18 @@ def list_trainings(model_id):
 @bp.get("/<training_id>")
 @jwt_required()
 def get_training(model_id, training_id):
+
+    current_user = get_jwt_identity()
+    # Access to the model is required to display trainings.
+    try:
+        _ = (
+            Model.query.filter_by(id=model_id)
+            .filter(or_(Model.belongs_to == current_user, Model.public == True))
+            .one()
+        )
+    except NoResultFound:
+        err = NotFoundException("Model not found.")
+        return jsonify(errors=[err.as_dict()]), err.code
 
     training: Training
 
