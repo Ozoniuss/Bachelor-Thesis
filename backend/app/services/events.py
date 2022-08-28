@@ -63,9 +63,7 @@ def save_new_model(message):
     if cache.get(sid) == None:
         emit(
             "error",
-            {
-                "data": "Training does not exist. Make sure training is still not in progress"
-            },
+            "Training does not exist. Make sure training is still not in progress",
             to=sid,
         )
         return
@@ -100,9 +98,7 @@ def overwrite_model(message):
     if cache.get(sid) == None:
         emit(
             "error",
-            {
-                "data": "Training does not exist. Make sure training is still not in progress"
-            },
+            "Training does not exist. Make sure training is still not in progress",
             to=sid,
         )
         return
