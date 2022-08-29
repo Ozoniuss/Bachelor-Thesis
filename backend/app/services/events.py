@@ -167,8 +167,6 @@ def handle_training(msg):
     try:
         token = decode_token(message.user_id)
         authenticated_user_id = token.get("sub")
-        print(token)
-        print(authenticated_user_id)
     except Exception:
         emit("error", "Invalid JWT token.", to=sid)
 
@@ -246,7 +244,7 @@ def handle_training(msg):
     try:
         loaded_model = load_model_in_memory(
             message.model_id,
-            user_id,
+            authenticated_user_id,
             model_db.current_prediction_labels,
             dataset_db.labels,
             message.parameters.train_all_network,
