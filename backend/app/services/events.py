@@ -32,6 +32,8 @@ from ..public.websocket.training_parameter import (
     from_dict,
 )
 
+from flask_jwt_extended import decode_token
+
 
 @socketio.on("connect")
 def connect_hander():
@@ -158,13 +160,23 @@ def discard_training(message):
 @socketio.on("train")
 def handle_training(msg):
     sid = request.sid
+
+    message = from_dict(msg)
+    authenticated_user_id: str
+
+    try:
+        token = decode_token(message.user_id)
+        authenticated_user_id = token.get("sub")
+        print(token)
+        print(authenticated_user_id)
+    except Exception:
+        emit("error", "Invalid JWT token.", to=sid)
+
     if cache.get(sid) != None:
         emit("error", "Another training is waiting for completion.", to=sid)
         return
 
     cache.set(sid, "")
-
-    message = from_dict(msg)
 
     try:
         validate_training_parameters(message.parameters)
@@ -189,7 +201,9 @@ def handle_training(msg):
     try:
         model_db = (
             Model.query.filter_by(id=message.model_id)
-            .filter(or_(Model.belongs_to == message.user_id, Model.public == True))
+            .filter(
+                or_(Model.belongs_to == authenticated_user_id, Model.public == True)
+            )
             .one()
         )
     except NoResultFound:
@@ -232,7 +246,7 @@ def handle_training(msg):
     try:
         loaded_model = load_model_in_memory(
             message.model_id,
-            message.user_id,
+            user_id,
             model_db.current_prediction_labels,
             dataset_db.labels,
             message.parameters.train_all_network,
@@ -274,7 +288,7 @@ def handle_training(msg):
     new_model_db = Model(
         id=str(new_model_uuid),
         name=model_db.name,
-        belongs_to=message.user_id,
+        belongs_to=authenticated_user_id,
         description=model_db.description,
         public=False,
         last_trained_on=message.dataset_id,
@@ -282,10 +296,10 @@ def handle_training(msg):
         param_count=model.count_params(),
     )
 
-    init_cache(sid, message.user_id, training, model_db.id, new_model_db)
+    init_cache(sid, authenticated_user_id, training, model_db.id, new_model_db)
 
     # Save the model temporarily in the user's director.
-    save_model(model, sid, message.user_id)
+    save_model(model, sid, authenticated_user_id)
 
     emit("train_completed", "Training completed succesfully.", to=sid)
 
