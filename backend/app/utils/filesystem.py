@@ -154,6 +154,9 @@ def save_model_from_storage(fs: FileStorage, model_id: str, user_id: str):
 
 
 def save_images_from_storage(images: list[FileStorage], test_folder: str):
+    if len(images) == 0:
+        raise FileSystemException("No images uplaoded.")
+
     full_path = _must_get_testing_path(test_folder)
     try:
         os.mkdir(full_path)
