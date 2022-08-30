@@ -115,36 +115,6 @@ def perform_training(
     train_ds,
     valid_ds,
 ):
-    """
-    This function trains a model on a specific dataset. The following are
-    possible:
-    - The model's current labels are the same as the dataset's labels. In this
-    case, the output layer will stay the same and normal training shall be
-    performed.
-    - The model's current labels are different from the dataset's labels. This
-    obviously includes not having the same number of neurons as the dataset's
-    number of categories. In this case, the model will be loaded and the output
-    layer will be removed and replaced by a new Dense (possibly customizable in
-    the future) output layer with the required number of neurons. The new model
-    shall be compiled and trained on the new dataset with the provided training
-    configurations.
-    - It is possible to configure the following:
-    - - epochs: limited to 30
-    - - learning rate: between 0.1 and 0.0001 (adam compiler used)
-    - - batch_size: between 5 and 100
-    - - on_not_enough_samples: see generateTrainingDataset definition
-    - - validation_split: between 0 and 0.5. If set to 0 or not provided, there
-    will be no validation dataset.
-    - - seed: seed for shuffling the data. If not provided, it is generated
-    automatically.
-    - - train_all_networks: whether to train the entire network or just the
-    output layer. It shall be forbidden to train the entire network if the
-    network is too large.
-
-    It is desired that this becomes more configurable in the future. It should
-    be at least possible to customize the loss function, the output layer type
-    and the activation function of the output layer.
-    """
 
     history = None
 
