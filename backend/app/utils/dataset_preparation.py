@@ -1,8 +1,9 @@
 import tensorflow as tf
-from keras.layers import Rescaling
 from keras.utils import image_dataset_from_directory
 from .filesystem import _get_training_path, _get_testing_path, FileSystemException
 from sklearn.preprocessing import normalize
+
+import random
 
 
 def __get_full_training_path(training_folder):
@@ -45,6 +46,9 @@ def get_dataset_iterators(training_folder, validation_split, seed):
     training_path = __get_full_training_path(training_folder)
 
     train_ds = valid_ds = train_normalized_ds = valid_normalized_ds = None
+
+    if seed == 0:
+        seed = random.randint(1, 256)
 
     # Setting this to 0 in image_dataset_from_directory return an error.
     if validation_split == 0:
