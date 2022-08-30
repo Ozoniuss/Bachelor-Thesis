@@ -1,0 +1,6 @@
+ERROR = "error"
+INFO = "info"
+SAVE_NEW = "save_new"
+OVERWRITE = "overwrite"
+DISCARD = "discard"
+TRAIN = "train"
