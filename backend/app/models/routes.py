@@ -1,5 +1,5 @@
 import uuid
-from flask import Blueprint, jsonify, request, send_file, send_from_directory
+from flask import Blueprint, jsonify, request, send_file
 from .model import Model
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from sqlalchemy import or_
@@ -12,7 +12,6 @@ from ..utils.filesystem import (
     save_model_from_storage,
     must_remove_model,
     _get_model_path,
-    _get_models_directory,
 )
 from ..utils.file_extensions import allowed_file, get_model_allowed_extensions
 from ..utils.sqlalchemy import List
@@ -31,6 +30,7 @@ from keras.models import load_model as keras_load_model
 from werkzeug.datastructures import FileStorage
 import os
 from keras import Sequential
+from tensorflow_hub.keras_layer import KerasLayer
 
 
 bp = Blueprint("models", __name__, url_prefix="/models")
@@ -335,6 +335,6 @@ def validate_update_params(name, description, public):
 def read_model_from_file_storage(fs: FileStorage) -> Sequential:
     tmp_file = str(uuid.uuid4())
     fs.save(tmp_file)
-    model = keras_load_model(tmp_file)
+    model = keras_load_model(tmp_file, custom_objects={"KerasLayer": KerasLayer})
     os.remove(tmp_file)
     return model
