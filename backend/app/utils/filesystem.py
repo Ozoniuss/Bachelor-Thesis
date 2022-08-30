@@ -7,10 +7,11 @@ import glob
 from werkzeug.datastructures import FileStorage
 from keras.models import load_model as keras_load_model, save_model as keras_save_model
 from keras import Sequential
+from tensorflow_hub.keras_layer import KerasLayer
 
 # todo: env variables
 MODELS_DIR = "C:\personal projects\Bachelor-Thesis\models\\"
-DATASETS_DIR = "C:\personal projects\Bachelor-Thesis\datasets\\"
+DATASETS_DIR = "C:\personal projects\Bachelor-Thesis\\frontend\src\\assets\datasets\\"
 TRAINING_DIR = "C:\personal projects\Bachelor-Thesis\\training\\"
 TESTING_DIR = "C:\personal projects\Bachelor-Thesis\\test\\"
 
@@ -355,7 +356,7 @@ def load_model(model_id, user_id) -> Sequential:
     """
     try:
         full_path = _get_model_path(model_id, user_id)
-        return keras_load_model(full_path)
+        return keras_load_model(full_path, custom_objects={"KerasLayer": KerasLayer})
     except FileNotFoundError:
         raise FileSystemException("Model is not stored on the file system.")
 
