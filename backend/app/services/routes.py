@@ -8,7 +8,6 @@ from ..public.api.exception import (
     NotFoundException,
     InternalServerException,
 )
-from app.extensions import db, socketio
 from sqlalchemy.exc import NoResultFound
 import uuid
 
@@ -16,7 +15,6 @@ from sqlalchemy import or_
 from ..utils.filesystem import (
     FileSystemException,
     load_model,
-    remove_training_dataset,
     save_images_from_storage,
     remove_testing_dataset,
 )
@@ -31,7 +29,7 @@ bp = Blueprint("services", __name__, url_prefix="/services/<model_id>")
 # For this operation we would ideally want to cache the stored model so that
 # we can continuously make predictions. For now this would only load the model
 # into memory and make a prediction on the input vector of images.
-@bp.get("/prediction")
+@bp.post("/prediction")
 @jwt_required()
 def make_prediction(model_id):
 
