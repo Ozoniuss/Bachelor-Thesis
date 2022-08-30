@@ -9,6 +9,7 @@ from ..utils.filesystem import (
     generate_training_dataset,
     FileSystemException,
 )
+from keras.activations import softmax
 from keras.callbacks import Callback
 from ..extensions import socketio
 from ..utils.list import same_labels
@@ -85,7 +86,7 @@ def load_model_in_memory(
         new_model = Sequential()
         for layer in model.layers[:-1]:
             new_model.add(layer)
-        new_model.add(Dense(len(dataset_labels)))
+        new_model.add(Dense(len(dataset_labels), activation=softmax))
         model = new_model
 
     # Set either all layers as trainable or only the last layer.
@@ -96,10 +97,10 @@ def load_model_in_memory(
                 + "trainable params. This option is only available for models "
                 + "with at most 20,000 parameters."
             )
-        for idx, _ in enumerate(model.layers):
+        for idx in range(len(model.layers)):
             model.layers[idx].trainable = True
     else:
-        for idx, _ in enumerate(model.layers):
+        for idx in range(len(model.layers)):
             model.layers[idx].trainable = False
         model.layers[len(model.layers) - 1].trainable = True
 
