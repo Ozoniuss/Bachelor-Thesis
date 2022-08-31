@@ -39,7 +39,9 @@ def make_prediction(model_id):
     prediction_images = request.files.getlist("images")
     for img in prediction_images:
         if not allowed_file(img.filename, get_image_allowed_extensions()):
-            err = BadRequestException("Image extension not allowed, must be .h5")
+            err = BadRequestException(
+                "Image extension not allowed, must be jpg, jpeg or png."
+            )
             return jsonify(errors=[err.as_dict()]), err.code
 
     test_folder = str(uuid.uuid4())
@@ -47,7 +49,7 @@ def make_prediction(model_id):
     try:
         save_images_from_storage(prediction_images, test_folder)
     except FileSystemException as e:
-        err = InternalServerException(str(e))
+        err = BadRequestException(str(e))
         return jsonify(errors=[err.as_dict()]), err.code
 
     # This query is necessary in order to determine if the model is public or
