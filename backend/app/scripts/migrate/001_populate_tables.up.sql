@@ -9,30 +9,6 @@ INSERT INTO datasets (id, name, description, labels) VALUES
 ('0f8ec842-52b4-46b1-8dc6-fa71e60a294f', 'cats-vs-dogs', 'A pretty large dataset with 25000 images of cats and dogs.', '{"cats", "dogs"}');
 INSERT INTO datasets (id, name, description, labels) VALUES 
 ('3a3b10e2-14bb-41bb-f1a2-1a2a3a4bd2d3', 'five-flowers','A decent flowers dataset with 3600 images and 5 different categories.', '{"daisy", "dandelion", "roses", "sunflowers", "tulips"}');
-INSERT INTO datasets (id, name, description, labels) VALUES 
-('0f8ec842-52b4-46b1-8dc6-fa71e60a2940', 'cats-vs-dogs-2', 'A pretty large dataset with 25000 images of cats and dogs.', '{"cats", "dogs"}');
-INSERT INTO datasets (id, name, description, labels) VALUES 
-('0f8ec842-52b4-46b1-8dc6-fa71e60a2941', 'cats-vs-dogs-3', 'A pretty large dataset with 25000 images of cats and dogs.', '{"cats", "dogs"}');
-INSERT INTO datasets (id, name, description, labels) VALUES 
-('0f8ec842-52b4-46b1-8dc6-fa71e60a2942', 'cats-vs-dogs-4', 'A pretty large dataset with 25000 images of cats and dogs.', '{"cats", "dogs"}');
-INSERT INTO datasets (id, name, description, labels) VALUES 
-('0f8ec842-52b4-46b1-8dc6-fa71e60a2943', 'cats-vs-dogs-5', 'A pretty large dataset with 25000 images of cats and dogs.', '{"cats", "dogs"}');
-INSERT INTO datasets (id, name, description, labels) VALUES 
-('0f8ec842-52b4-46b1-8dc6-fa71e60a2944', 'cats-vs-dogs-6', 'A pretty large dataset with 25000 images of cats and dogs.', '{"cats", "dogs"}');
-INSERT INTO datasets (id, name, description, labels) VALUES 
-('0f8ec842-52b4-46b1-8dc6-fa71e60a2945', 'cats-vs-dogs-7', 'A pretty large dataset with 25000 images of cats and dogs.', '{"cats", "dogs"}');
-INSERT INTO datasets (id, name, description, labels) VALUES 
-('0f8ec842-52b4-46b1-8dc6-fa71e60a2946', 'cats-vs-dogs-8', 'A pretty large dataset with 25000 images of cats and dogs.', '{"cats", "dogs"}');
-INSERT INTO datasets (id, name, description, labels) VALUES 
-('0f8ec842-52b4-46b1-8dc6-fa71e60a2947', 'cats-vs-dogs-9', 'A pretty large dataset with 25000 images of cats and dogs.', '{"cats", "dogs"}');
-INSERT INTO datasets (id, name, description, labels) VALUES 
-('0f8ec842-52b4-46b1-8dc6-fa71e60a2948', 'cats-vs-dogs-10', 'A pretty large dataset with 25000 images of cats and dogs.', '{"cats", "dogs"}');
-INSERT INTO datasets (id, name, description, labels) VALUES 
-('0f8ec842-52b4-46b1-8dc6-fa71e60a2949', 'cats-vs-dogs-11', 'A pretty large dataset with 25000 images of cats and dogs.', '{"cats", "dogs"}');
-INSERT INTO datasets (id, name, description, labels) VALUES 
-('0f8ec842-52b4-46b1-8dc6-fa71e60a294a', 'cats-vs-dogs-12', 'A pretty large dataset with 25000 images of cats and dogs.', '{"cats", "dogs"}');
-INSERT INTO datasets (id, name, description, labels) VALUES 
-('0f8ec842-52b4-46b1-8dc6-fa71e60a294b', 'cats-vs-dogs-13', 'A pretty large dataset with 25000 images of cats and dogs.', '{"cats", "dogs"}');
 
 INSERT INTO models (id, name, belongs_to , description, created_at, updated_at, public, last_trained_on, current_prediction_labels, param_count) VALUES 
 ('2c87dd1a-ca57-4f6a-819f-bcf3cdd47642', 'cats_vs_dogs', '01232321-3222-2122-bb21-6a21abab1121', 'A medium-size model attempting to distinguish between cats and dogs.', TIMESTAMPTZ '2022-07-21 10:42:51+03', TIMESTAMPTZ '2022-07-21  10:42:51+03', true, '0f8ec842-52b4-46b1-8dc6-fa71e60a294f', '{"cats", "dogs"}', 420802),
