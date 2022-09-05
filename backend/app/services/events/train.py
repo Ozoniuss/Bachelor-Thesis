@@ -93,14 +93,14 @@ def handle_training(msg):
         ).one()
     except NoResultFound:
         clean_cache(sid)
-        emit(ERROR_CH, f"Model {model_db} not found.", to=sid)
+        emit(ERROR_CH, f"Model {message.model_id} not found.", to=sid)
         return
 
     try:
         dataset_db = Dataset.query.filter_by(id=message.dataset_id).one()
     except NoResultFound:
         clean_cache(sid)
-        emit(ERROR_CH, f"Dataset {dataset_db} was not found.", to=sid)
+        emit(ERROR_CH, f"Dataset {message.dataset_id} was not found.", to=sid)
         return
 
     history = out = None
