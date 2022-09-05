@@ -48,6 +48,8 @@ def list_models():
     If public is true, it lists all public models. If set to false, it lists
     all the private models of the user. If unset, it returns both public models
     and the user's private models.
+
+    v2: lists all models belonging to the user if no query parameter
     """
     current_user_id = get_jwt_identity()
     args = request.args
@@ -84,7 +86,9 @@ def list_models():
     # the user's private models or public.
     if filters.public == None:
         query = query.filter(
-            or_(Model.belongs_to == current_user_id, Model.public == True)
+            # or_(Model.belongs_to == current_user_id, Model.public == True)
+            Model.belongs_to
+            == current_user_id
         )
 
     all_models, prev, next = List(
